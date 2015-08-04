@@ -2756,8 +2756,7 @@ func (s *DockerSuite) TestPtraceContainerProcsFromHost(c *check.C) {
 }
 
 func (s *DockerSuite) TestAppArmorDeniesPtrace(c *check.C) {
-	testRequires(c, SameHostDaemon)
-	testRequires(c, Apparmor)
+	testRequires(c, SameHostDaemon, NativeExecDriver, Apparmor)
 
 	// Run through 'sh' so we are NOT pid 1. Pid 1 may be able to trace
 	// itself, but pid>1 should not be able to trace pid1.
@@ -2775,4 +2774,10 @@ func (s *DockerSuite) TestAppArmorTraceSelf(c *check.C) {
 	if exitCode != 0 {
 		c.Fatal("ptrace of self failed.")
 	}
+}
+
+func (s *DockerSuite) TestRunCapAddSYSTIME(c *check.C) {
+	testRequires(c, NativeExecDriver)
+
+	dockerCmd(c, "run", "--cap-drop=ALL", "--cap-add=SYS_TIME", "busybox", "sh", "-c", "grep ^CapEff /proc/self/status | sed 's/^CapEff:\t//' | grep ^0000000002000000$")
 }
