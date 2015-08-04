@@ -84,7 +84,7 @@ func (c *contStore) List() []*Container {
 		containers.Add(cont)
 	}
 	c.Unlock()
-	containers.Sort()
+	containers.sort()
 	return *containers
 }
 
@@ -751,7 +751,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 	return d, nil
 }
 
-// Shutdown
+// Shutdown stops the daemon.
 func (daemon *Daemon) Shutdown() error {
 	if daemon.containers != nil {
 		group := sync.WaitGroup{}

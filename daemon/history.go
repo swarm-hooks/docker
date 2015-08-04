@@ -27,6 +27,8 @@ func (history *History) Add(container *Container) {
 	*history = append(*history, container)
 }
 
-func (history *History) Sort() {
+// History implements the sort interface, can we inline calls to sort
+// rather than have this function?
+func (history *History) sort() {
 	sort.Sort(history)
 }
