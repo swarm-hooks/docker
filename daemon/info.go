@@ -57,7 +57,7 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 	initPath := utils.DockerInitPath("")
 	if initPath == "" {
 		// if that fails, we'll just return the path from the daemon
-		initPath = daemon.SystemInitPath()
+		initPath = daemon.systemInitPath()
 	}
 
 	v := &types.Info{

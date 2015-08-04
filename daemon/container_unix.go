@@ -474,7 +474,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 		joinOptions = append(joinOptions, libnetwork.JoinOptionExtraHost(parts[0], parts[1]))
 	}
 
-	refs := container.daemon.ContainerGraph().RefPaths(container.ID)
+	refs := container.daemon.containerGraph().RefPaths(container.ID)
 	for _, ref := range refs {
 		if ref.ParentID == "0" {
 			continue

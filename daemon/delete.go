@@ -33,12 +33,12 @@ func (daemon *Daemon) ContainerRm(name string, config *ContainerRmConfig) error 
 		if parent == "/" {
 			return fmt.Errorf("Conflict, cannot remove the default name of the container")
 		}
-		pe := daemon.ContainerGraph().Get(parent)
+		pe := daemon.containerGraph().Get(parent)
 		if pe == nil {
 			return fmt.Errorf("Cannot get parent %s for name %s", parent, name)
 		}
 
-		if err := daemon.ContainerGraph().Delete(name); err != nil {
+		if err := daemon.containerGraph().Delete(name); err != nil {
 			return err
 		}
 

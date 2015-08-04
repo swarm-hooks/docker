@@ -65,7 +65,7 @@ func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, 
 		}
 	}
 	names := map[string][]string{}
-	daemon.ContainerGraph().Walk("/", func(p string, e *graphdb.Entity) error {
+	daemon.containerGraph().Walk("/", func(p string, e *graphdb.Entity) error {
 		names[e.ID()] = append(names[e.ID()], p)
 		return nil
 	}, 1)

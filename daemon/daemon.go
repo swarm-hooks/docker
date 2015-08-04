@@ -883,7 +883,7 @@ func (daemon *Daemon) systemConfig() *sysinfo.SysInfo {
 	return daemon.sysInfo
 }
 
-func (daemon *Daemon) SystemInitPath() string {
+func (daemon *Daemon) systemInitPath() string {
 	return daemon.sysInitPath
 }
 
@@ -895,10 +895,11 @@ func (daemon *Daemon) ExecutionDriver() execdriver.Driver {
 	return daemon.execDriver
 }
 
-func (daemon *Daemon) ContainerGraph() *graphdb.Database {
+func (daemon *Daemon) containerGraph() *graphdb.Database {
 	return daemon.containerGraph
 }
 
+// ImageGetCached return an image created before the given image with the same configuration.
 func (daemon *Daemon) ImageGetCached(imgID string, config *runconfig.Config) (*image.Image, error) {
 	// Retrieve all images
 	images := daemon.Graph().Map()
