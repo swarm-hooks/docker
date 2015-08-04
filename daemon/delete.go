@@ -87,7 +87,7 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 		return fmt.Errorf("Failed to set container state to RemovalInProgress: %s", err)
 	}
 
-	defer container.ResetRemovalInProgress()
+	defer container.resetRemovalInProgress()
 
 	if err = container.Stop(3); err != nil {
 		return err
