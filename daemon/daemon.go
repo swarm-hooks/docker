@@ -843,7 +843,7 @@ func (daemon *Daemon) Stats(c *Container) (*execdriver.ResourceStats, error) {
 	return daemon.execDriver.Stats(c.ID)
 }
 
-func (daemon *Daemon) SubscribeToContainerStats(name string) (chan interface{}, error) {
+func (daemon *Daemon) subscribeToContainerStats(name string) (chan interface{}, error) {
 	c, err := daemon.Get(name)
 	if err != nil {
 		return nil, err
@@ -852,7 +852,7 @@ func (daemon *Daemon) SubscribeToContainerStats(name string) (chan interface{}, 
 	return ch, nil
 }
 
-func (daemon *Daemon) UnsubscribeToContainerStats(name string, ch chan interface{}) error {
+func (daemon *Daemon) unsubscribeToContainerStats(name string, ch chan interface{}) error {
 	c, err := daemon.Get(name)
 	if err != nil {
 		return err

@@ -21,7 +21,7 @@ type ContainerStatsConfig struct {
 // ContainerStats writes information about the container to the stream
 // given in the config object.
 func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) error {
-	updates, err := daemon.SubscribeToContainerStats(name)
+	updates, err := daemon.subscribeToContainerStats(name)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) 
 
 	enc := json.NewEncoder(config.OutStream)
 
-	defer daemon.UnsubscribeToContainerStats(name, updates)
+	defer daemon.unsubscribeToContainerStats(name, updates)
 
 	noStreamFirstFrame := true
 	for {
