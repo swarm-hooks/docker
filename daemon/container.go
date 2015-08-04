@@ -500,7 +500,7 @@ func (container *Container) Stop(seconds int) error {
 	}
 
 	// 1. Send a SIGTERM
-	if err := container.killPossiblyDeadProcess(int(syscall.SIGABRT)); err != nil {
+	if err := container.killPossiblyDeadProcess(int(syscall.SIGTERM)); err != nil {
 		logrus.Infof("Failed to send SIGTERM to the process, force killing")
 		if err := container.killPossiblyDeadProcess(int(syscall.SIGKILL)); err != nil {
 			return err
