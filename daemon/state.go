@@ -118,7 +118,7 @@ func wait(waitChan <-chan struct{}, timeout time.Duration) error {
 // WaitRunning waits until state is running. If state already running it returns
 // immediately. If you want wait forever you must supply negative timeout.
 // Returns pid, that was passed to SetRunning
-func (s *State) WaitRunning(timeout time.Duration) (int, error) {
+func (s *State) waitRunning(timeout time.Duration) (int, error) {
 	s.Lock()
 	if s.Running {
 		pid := s.Pid
@@ -151,6 +151,7 @@ func (s *State) WaitStop(timeout time.Duration) (int, error) {
 	return s.getExitCode(), nil
 }
 
+// IsRunning returns whether the running flag is set. Used by Container to check whether a container is running.
 func (s *State) IsRunning() bool {
 	s.Lock()
 	res := s.Running
@@ -158,6 +159,7 @@ func (s *State) IsRunning() bool {
 	return res
 }
 
+// GetPid holds the process id of a container (perhaps this should be moved up into CommonContainer
 func (s *State) GetPid() int {
 	s.Lock()
 	res := s.Pid
@@ -207,9 +209,9 @@ func (s *State) setStopped(exitStatus *execdriver.ExitStatus) {
 	s.waitChan = make(chan struct{})
 }
 
-// SetRestarting is when docker handles the auto restart of containers when they are
+// setRestarting is when docker handles the auto restart of containers when they are
 // in the middle of a stop and being restarted again
-func (s *State) SetRestarting(exitStatus *execdriver.ExitStatus) {
+func (s *State) setRestarting(exitStatus *execdriver.ExitStatus) {
 	s.Lock()
 	// we should consider the container running when it is restarting because of
 	// all the checks in docker around rm/stop/etc

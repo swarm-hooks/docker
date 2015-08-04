@@ -157,7 +157,7 @@ func (m *containerMonitor) Start() error {
 		m.resetMonitor(err == nil && exitStatus.ExitCode == 0)
 
 		if m.shouldRestart(exitStatus.ExitCode) {
-			m.container.SetRestarting(&exitStatus)
+			m.container.setRestarting(&exitStatus)
 			if exitStatus.OOMKilled {
 				m.container.LogEvent("oom")
 			}

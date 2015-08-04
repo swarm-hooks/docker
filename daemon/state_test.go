@@ -14,7 +14,7 @@ func TestStateRunStop(t *testing.T) {
 		started := make(chan struct{})
 		var pid int64
 		go func() {
-			runPid, _ := s.WaitRunning(-1 * time.Second)
+			runPid, _ := s.waitRunning(-1 * time.Second)
 			atomic.StoreInt64(&pid, int64(runPid))
 			close(started)
 		}()
@@ -38,8 +38,8 @@ func TestStateRunStop(t *testing.T) {
 		if runPid != i+100 {
 			t.Fatalf("Pid %v, expected %v", runPid, i+100)
 		}
-		if pid, err := s.WaitRunning(-1 * time.Second); err != nil || pid != i+100 {
-			t.Fatalf("WaitRunning returned pid: %v, err: %v, expected pid: %v, err: %v", pid, err, i+100, nil)
+		if pid, err := s.waitRunning(-1 * time.Second); err != nil || pid != i+100 {
+			t.Fatalf("waitRunning returned pid: %v, err: %v, expected pid: %v, err: %v", pid, err, i+100, nil)
 		}
 
 		stopped := make(chan struct{})
@@ -79,7 +79,7 @@ func TestStateTimeoutWait(t *testing.T) {
 	s := NewState()
 	started := make(chan struct{})
 	go func() {
-		s.WaitRunning(100 * time.Millisecond)
+		s.waitRunning(100 * time.Millisecond)
 		close(started)
 	}()
 	select {
@@ -91,7 +91,7 @@ func TestStateTimeoutWait(t *testing.T) {
 	s.SetRunning(42)
 	stopped := make(chan struct{})
 	go func() {
-		s.WaitRunning(100 * time.Millisecond)
+		s.waitRunning(100 * time.Millisecond)
 		close(stopped)
 	}()
 	select {
