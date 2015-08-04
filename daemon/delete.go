@@ -83,7 +83,7 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 	}
 
 	// Container state RemovalInProgress should be used to avoid races.
-	if err = container.SetRemovalInProgress(); err != nil {
+	if err = container.setRemovalInProgress(); err != nil {
 		return fmt.Errorf("Failed to set container state to RemovalInProgress: %s", err)
 	}
 
@@ -94,7 +94,7 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 	}
 
 	// Mark container dead. We don't want anybody to be restarting it.
-	container.SetDead()
+	container.setDead()
 
 	// Save container state to disk. So that if error happens before
 	// container meta file got removed from disk, then a restart of

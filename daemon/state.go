@@ -147,7 +147,7 @@ func (s *State) WaitStop(timeout time.Duration) (int, error) {
 	if err := wait(waitChan, timeout); err != nil {
 		return -1, err
 	}
-	return s.GetExitCode(), nil
+	return s.getExitCode(), nil
 }
 
 func (s *State) IsRunning() bool {
@@ -164,7 +164,7 @@ func (s *State) GetPid() int {
 	return res
 }
 
-func (s *State) GetExitCode() int {
+func (s *State) getExitCode() int {
 	s.Lock()
 	res := s.ExitCode
 	s.Unlock()
@@ -237,7 +237,7 @@ func (s *State) isPaused() bool {
 	return res
 }
 
-func (s *State) SetRemovalInProgress() error {
+func (s *State) setRemovalInProgress() error {
 	s.Lock()
 	defer s.Unlock()
 	if s.removalInProgress {
@@ -247,13 +247,7 @@ func (s *State) SetRemovalInProgress() error {
 	return nil
 }
 
-func (s *State) ResetRemovalInProgress() {
-	s.Lock()
-	s.removalInProgress = false
-	s.Unlock()
-}
-
-func (s *State) SetDead() {
+func (s *State) setDead() {
 	s.Lock()
 	s.Dead = true
 	s.Unlock()

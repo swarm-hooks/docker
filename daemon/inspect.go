@@ -91,6 +91,11 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 
 // ContainerExecInspect low-level information about the exec
 // command. An error is returned if the exec cannot be found.
+//
+// golnit complains exported method ContainerExecInspect returns
+// unexported type *daemon.execConfig, which can be annoying to use
+//
+// not sure what to do about the return value
 func (daemon *Daemon) ContainerExecInspect(id string) (*execConfig, error) {
 	eConfig, err := daemon.getExecConfig(id)
 	if err != nil {
