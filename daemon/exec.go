@@ -128,7 +128,7 @@ func (d *Daemon) getActiveContainer(name string) (*Container, error) {
 	return container, nil
 }
 
-// ContainerExecCreate sets up an exec in a running container. 
+// ContainerExecCreate sets up an exec in a running container.
 func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, error) {
 	// Not all drivers support Exec (LXC for example)
 	if err := checkExecSupport(d.execDriver.Name()); err != nil {
