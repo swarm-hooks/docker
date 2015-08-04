@@ -34,7 +34,9 @@ import (
 )
 
 var (
-	// ErrContainerRootfsReadonly is returned when a container rootfs is marked readonly (perhaps move to archive.go, the only site of usage.
+	// ErrContainerRootfsReadonly is returned when a container
+	// rootfs is marked readonly. (perhaps move to archive.go and
+	// make private, the only site of usage)
 	ErrContainerRootfsReadonly = errors.New("container rootfs is marked read-only")
 )
 
