@@ -5,6 +5,8 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
+// ContainerCommitConfig contains build configs for commit operation,
+// and is used when making a commit with the current state of the container
 type ContainerCommitConfig struct {
 	Pause   bool
 	Repo    string
