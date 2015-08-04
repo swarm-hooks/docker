@@ -17,6 +17,8 @@ func (daemon *Daemon) List() []*Container {
 	return daemon.containers.List()
 }
 
+// ContainersConfig is a struct for configuring the command to list
+// containers.
 type ContainersConfig struct {
 	All     bool
 	Since   string
@@ -26,6 +28,7 @@ type ContainersConfig struct {
 	Filters string
 }
 
+// Containers returns a list of all the containers.
 func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, error) {
 	var (
 		foundBefore bool

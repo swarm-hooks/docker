@@ -100,7 +100,7 @@ func isValidStateString(s string) bool {
 
 func wait(waitChan <-chan struct{}, timeout time.Duration) error {
 	if timeout < 0 {
- 		<-waitChan
+		<-waitChan
 		return nil
 	}
 	select {

@@ -18,7 +18,8 @@ type ContainerStatsConfig struct {
 	Stop      <-chan bool
 }
 
-// ContainerStats writes information about the container to the stream given in the config object. 
+// ContainerStats writes information about the container to the stream
+// given in the config object.
 func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) error {
 	updates, err := daemon.SubscribeToContainerStats(name)
 	if err != nil {

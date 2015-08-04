@@ -7,7 +7,9 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
-// ContainerInspect
+// ContainerInspect returns lowlevel information about a
+// container. Returns an error if the container cannot be found, or if
+// there is an error getting the data.
 func (daemon *Daemon) ContainerInspect(name string) (*types.ContainerJSON, error) {
 	container, err := daemon.Get(name)
 	if err != nil {
@@ -87,7 +89,8 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 	return contJSONBase, nil
 }
 
-// ContainerExecInspect
+// ContainerExecInspect low-level information about the exec
+// command. An error is returned if the exec cannot be found.
 func (daemon *Daemon) ContainerExecInspect(id string) (*execConfig, error) {
 	eConfig, err := daemon.getExecConfig(id)
 	if err != nil {

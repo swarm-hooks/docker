@@ -40,7 +40,8 @@ func (daemon *Daemon) ContainerAttachWithLogs(container *Container, c *Container
 	return container.AttachWithLogs(stdin, stdout, stderr, c.Logs, c.Stream)
 }
 
-// ContainerWsAttachWithLogsConfig  attach with websockets, since all stream data is delegated to the websocket to handle, there 
+// ContainerWsAttachWithLogsConfig attach with websockets, since all
+// stream data is delegated to the websocket to handle, there
 type ContainerWsAttachWithLogsConfig struct {
 	InStream             io.ReadCloser
 	OutStream, ErrStream io.Writer

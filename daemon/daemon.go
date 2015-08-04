@@ -1,5 +1,8 @@
 // Package daemon exposes the functions that occur on the host server
 // that the Docker daemon is running.
+//
+// In implementing the various functions of the daemon, there is often
+// a method-specific struct for configuring the runtime behavior.
 package daemon
 
 import (
@@ -21,6 +24,7 @@ import (
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/docker/daemon/execdriver/execdrivers"
 	"github.com/docker/docker/daemon/graphdriver"
+	// register vfs
 	_ "github.com/docker/docker/daemon/graphdriver/vfs"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/daemon/network"
@@ -46,7 +50,7 @@ var (
 	validContainerNameChars   = `[a-zA-Z0-9][a-zA-Z0-9_.-]`
 	validContainerNamePattern = regexp.MustCompile(`^/?` + validContainerNameChars + `+$`)
 
-	ErrSystemNotSupported = errors.New("The Docker daemon is not supported on this platform.")
+	errSystemNotSupported = errors.New("The Docker daemon is not supported on this platform.")
 )
 
 type contStore struct {
@@ -84,6 +88,7 @@ func (c *contStore) List() []*Container {
 	return *containers
 }
 
+// Daemon holds information about the Docker daemon.
 type Daemon struct {
 	ID               string
 	repository       string
@@ -125,11 +130,11 @@ func (daemon *Daemon) Get(prefixOrName string) (*Container, error) {
 		return containerByName, nil
 	}
 
-	containerId, indexError := daemon.idIndex.Get(prefixOrName)
+	containerID, indexError := daemon.idIndex.Get(prefixOrName)
 	if indexError != nil {
 		return nil, indexError
 	}
-	return daemon.containers.Get(containerId), nil
+	return daemon.containers.Get(containerID), nil
 }
 
 // Exists returns a true if a container of the specified ID or name exists,
@@ -560,7 +565,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 
 	// Verify the platform is supported as a daemon
 	if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
-		return nil, ErrSystemNotSupported
+		return nil, errSystemNotSupported
 	}
 
 	// Validate platform-specific requirements
@@ -788,7 +793,7 @@ func (daemon *Daemon) Shutdown() error {
 	return nil
 }
 
-// Mount
+// Mount sets the containers
 func (daemon *Daemon) Mount(container *Container) error {
 	dir, err := daemon.driver.Get(container.ID, container.GetMountLabel())
 	if err != nil {
@@ -844,6 +849,8 @@ func (daemon *Daemon) UnsubscribeToContainerStats(name string, ch chan interface
 	return nil
 }
 
+// Graph needs to be removed.
+//
 // FIXME: this is a convenience function for integration tests
 // which need direct access to daemon.graph.
 // Once the tests switch to using engine and jobs, this method
