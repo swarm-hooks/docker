@@ -529,6 +529,8 @@ func (container *Container) Restart(seconds int) error {
 	return nil
 }
 
+// Resize changes the TTY of the process running inside the container
+// to the given height and width. The container must be running.
 func (container *Container) Resize(h, w int) error {
 	if !container.IsRunning() {
 		return ErrContainerNotRunning{container.ID}

@@ -4,6 +4,9 @@ import (
 	"fmt"
 )
 
+// ContainerRename changes the name of a container, using the oldName
+// to find the container. An error is returned if newName is already
+// reserved.
 func (daemon *Daemon) ContainerRename(oldName, newName string) error {
 	if oldName == "" || newName == "" {
 		return fmt.Errorf("usage: docker rename OLD_NAME NEW_NAME")

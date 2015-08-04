@@ -1,3 +1,5 @@
+// Package daemon exposes the functions that occur on the host server
+// that the Docker daemon is running.
 package daemon
 
 import (

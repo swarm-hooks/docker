@@ -22,6 +22,7 @@ func (history *History) Swap(i, j int) {
 	containers[i], containers[j] = containers[j], containers[i]
 }
 
+// Add 
 func (history *History) Add(container *Container) {
 	*history = append(*history, container)
 }

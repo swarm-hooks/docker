@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
+// ContainerInspect
 func (daemon *Daemon) ContainerInspect(name string) (*types.ContainerJSON, error) {
 	container, err := daemon.Get(name)
 	if err != nil {
@@ -86,6 +87,7 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 	return contJSONBase, nil
 }
 
+// ContainerExecInspect
 func (daemon *Daemon) ContainerExecInspect(id string) (*execConfig, error) {
 	eConfig, err := daemon.getExecConfig(id)
 	if err != nil {
