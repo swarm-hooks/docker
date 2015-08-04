@@ -6,7 +6,7 @@ import (
 )
 
 // ContainerCommitConfig contains build configs for commit operation,
-// and is used when making a commit with the current state of the container
+// and is used when making a commit with the current state of the container.
 type ContainerCommitConfig struct {
 	Pause   bool
 	Repo    string
@@ -17,7 +17,7 @@ type ContainerCommitConfig struct {
 }
 
 // Commit creates a new filesystem image from the current state of a container.
-// The image can optionally be tagged into a repository
+// The image can optionally be tagged into a repository.
 func (daemon *Daemon) Commit(container *Container, c *ContainerCommitConfig) (*image.Image, error) {
 	if c.Pause && !container.IsPaused() {
 		container.Pause()
