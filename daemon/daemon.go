@@ -212,7 +212,7 @@ func (daemon *Daemon) register(container *Container, updateSuffixarray bool) err
 	if container.IsRunning() {
 		logrus.Debugf("killing old running container %s", container.ID)
 		// Set exit code to 128 + SIGKILL (9) to properly represent unsuccessful exit
-		container.SetStopped(&execdriver.ExitStatus{ExitCode: 137})
+		container.setStoppedLocking(&execdriver.ExitStatus{ExitCode: 137})
 
 		// use the current driver and ensure that the container is dead x.x
 		cmd := &execdriver.Command{

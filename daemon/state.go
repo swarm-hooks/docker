@@ -117,7 +117,7 @@ func wait(waitChan <-chan struct{}, timeout time.Duration) error {
 
 // WaitRunning waits until state is running. If state already running it returns
 // immediately. If you want wait forever you must supply negative timeout.
-// Returns pid, that was passed to SetRunning
+// Returns pid, that was passed to setRunningLocking
 func (s *State) waitRunning(timeout time.Duration) (int, error) {
 	s.Lock()
 	if s.Running {
@@ -135,7 +135,7 @@ func (s *State) waitRunning(timeout time.Duration) (int, error) {
 
 // WaitStop waits until state is stopped. If state already stopped it returns
 // immediately. If you want wait forever you must supply negative timeout.
-// Returns exit code, that was passed to SetStopped
+// Returns exit code, that was passed to setStoppedLocking
 func (s *State) WaitStop(timeout time.Duration) (int, error) {
 	s.Lock()
 	if !s.Running {
@@ -174,7 +174,7 @@ func (s *State) getExitCode() int {
 	return res
 }
 
-func (s *State) SetRunning(pid int) {
+func (s *State) setRunningLocking(pid int) {
 	s.Lock()
 	s.setRunning(pid)
 	s.Unlock()
@@ -192,7 +192,7 @@ func (s *State) setRunning(pid int) {
 	s.waitChan = make(chan struct{})
 }
 
-func (s *State) SetStopped(exitStatus *execdriver.ExitStatus) {
+func (s *State) setStoppedLocking(exitStatus *execdriver.ExitStatus) {
 	s.Lock()
 	s.setStopped(exitStatus)
 	s.Unlock()
