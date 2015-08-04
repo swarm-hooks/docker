@@ -89,7 +89,7 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 	return contJSONBase, nil
 }
 
-// ContainerExecInspect low-level information about the exec
+// ContainerExecInspect returns low-level information about the exec
 // command. An error is returned if the exec cannot be found.
 //
 // golnit complains exported method ContainerExecInspect returns

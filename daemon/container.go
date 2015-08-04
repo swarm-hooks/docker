@@ -38,6 +38,7 @@ var (
 	ErrContainerRootfsReadonly = errors.New("container rootfs is marked read-only")
 )
 
+// ErrContainerNotRunning holds the id of the container that is not running. 
 type ErrContainerNotRunning struct {
 	id string
 }
@@ -53,8 +54,8 @@ type streamConfig struct {
 	stdinPipe io.WriteCloser
 }
 
-// CommonContainer holds the settings for a container which are applicable
-// across all platforms supported by the daemon.
+// CommonContainer holds the fields for a container which are
+// applicable across all platforms supported by the daemon.
 type CommonContainer struct {
 	streamConfig
 	// embed for Container to support states directly.
@@ -875,7 +876,7 @@ func (container *Container) Attach(stdin io.ReadCloser, stdout io.Writer, stderr
 	return attach(&container.streamConfig, container.Config.OpenStdin, container.Config.StdinOnce, container.Config.Tty, stdin, stdout, stderr)
 }
 
-func (container *Container) AttachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer, logs, stream bool) error {
+func (container *Container) attachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer, logs, stream bool) error {
 	if logs {
 		logDriver, err := container.getLogger()
 		if err != nil {

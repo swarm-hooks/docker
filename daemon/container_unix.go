@@ -40,7 +40,8 @@ import (
 // DefaultPathEnv is unix style list of directories to search for executables.
 const DefaultPathEnv = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-// Container holds the details 
+// Container holds the fields specific to unixen implementations. See
+// CommonContainer for standard fields common to all containers.
 type Container struct {
 	CommonContainer
 
@@ -52,8 +53,8 @@ type Container struct {
 	MountPoints     map[string]*mountPoint
 	ResolvConfPath  string
 
-	Volumes         map[string]string // Deprecated since 1.7, kept for backwards compatibility
-	VolumesRW       map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
+	Volumes   map[string]string // Deprecated since 1.7, kept for backwards compatibility
+	VolumesRW map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
 }
 
 func killProcessDirectly(container *Container) error {
@@ -417,8 +418,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNS) > 0 {
 		dns = container.hostConfig.DNS
-	} else if len(container.daemon.config.Dns) > 0 {
-		dns = container.daemon.config.Dns
+	} else if len(container.daemon.config.DNS) > 0 {
+		dns = container.daemon.config.DNS
 	}
 
 	for _, d := range dns {
@@ -427,8 +428,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNSSearch) > 0 {
 		dnsSearch = container.hostConfig.DNSSearch
-	} else if len(container.daemon.config.DnsSearch) > 0 {
-		dnsSearch = container.daemon.config.DnsSearch
+	} else if len(container.daemon.config.DNSSearch) > 0 {
+		dnsSearch = container.daemon.config.DNSSearch
 	}
 
 	for _, ds := range dnsSearch {
@@ -814,7 +815,7 @@ func (container *Container) secondaryNetworkRequired(primaryNetworkType string) 
 	return false
 }
 
-func (container *Container) AllocateNetwork() error {
+func (container *Container) allocateNetwork() error {
 	mode := container.hostConfig.NetworkMode
 	controller := container.daemon.netController
 	if container.Config.NetworkDisabled || mode.IsContainer() {
@@ -948,14 +949,14 @@ func (container *Container) initializeNetworking() error {
 
 	}
 
-	if err := container.AllocateNetwork(); err != nil {
+	if err := container.allocateNetwork(); err != nil {
 		return err
 	}
 
 	return container.buildHostnameFile()
 }
 
-func (container *Container) ExportRw() (archive.Archive, error) {
+func (container *Container) exportRw() (archive.Archive, error) {
 	if container.daemon == nil {
 		return nil, fmt.Errorf("Can't load storage driver for unregistered container %s", container.ID)
 	}
@@ -1114,10 +1115,12 @@ func (container *Container) UnmountVolumes(forceSyscall bool) error {
 	return nil
 }
 
+// PrepareStorage does nothing on unixen.
 func (container *Container) PrepareStorage() error {
 	return nil
 }
 
+// CleanupStorage does nothing on unixen.
 func (container *Container) CleanupStorage() error {
 	return nil
 }

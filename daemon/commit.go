@@ -24,7 +24,7 @@ func (daemon *Daemon) Commit(container *Container, c *ContainerCommitConfig) (*i
 		defer container.Unpause()
 	}
 
-	rwTar, err := container.ExportRw()
+	rwTar, err := container.exportRw()
 	if err != nil {
 		return nil, err
 	}

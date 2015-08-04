@@ -18,6 +18,8 @@ import (
 // the container. Docker has no context of what the default path should be.
 const DefaultPathEnv = ""
 
+// Container holds fields specific to the Windows implementation. See
+// CommonContainer for standard fields common to all containers.
 type Container struct {
 	CommonContainer
 
@@ -143,11 +145,12 @@ func (container *Container) GetSize() (int64, int64) {
 	return 0, 0
 }
 
-func (container *Container) AllocateNetwork() error {
+// allocateNetwork is a no-op on Windows.
+func (container *Container) allocateNetwork() error {
 	return nil
 }
 
-func (container *Container) ExportRw() (archive.Archive, error) {
+func (container *Container) exportRw() (archive.Archive, error) {
 	if container.IsRunning() {
 		return nil, fmt.Errorf("Cannot export a running container.")
 	}
@@ -170,6 +173,7 @@ func (container *Container) UnmountVolumes(forceSyscall bool) error {
 	return nil
 }
 
+// PrepareStorage
 func (container *Container) PrepareStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		// Get list of paths to parent layers.
@@ -193,6 +197,7 @@ func (container *Container) PrepareStorage() error {
 	return nil
 }
 
+// CleanupStorage
 func (container *Container) CleanupStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		return hcsshim.UnprepareLayer(wd.Info(), container.ID)
