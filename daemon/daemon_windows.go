@@ -148,7 +148,7 @@ func initNetworkController(config *Config) (libnetwork.NetworkController, error)
 
 // RegisterLinks sets up links between containers and writes the
 // configuration out for persistence.
-func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.HostConfig) error {
+func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.HostConfig) error {
 	// TODO Windows. Factored out for network modes. There may be more
 	// refactoring required here.
 
@@ -166,7 +166,7 @@ func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.
 			//An error from daemon.Get() means this name could not be found
 			return fmt.Errorf("Could not get container for %s", name)
 		}
-		if err := daemon.RegisterLink(container, child, alias); err != nil {
+		if err := daemon.registerLink(container, child, alias); err != nil {
 			return err
 		}
 	}
@@ -174,7 +174,7 @@ func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.
 	// After we load all the links into the daemon
 	// set them to nil on the hostconfig
 	hostConfig.Links = nil
-	if err := container.WriteHostConfig(); err != nil {
+	if err := container.writeHostConfig(); err != nil {
 		return err
 	}
 	return nil

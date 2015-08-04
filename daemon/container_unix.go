@@ -236,7 +236,7 @@ func populateCommand(c *Container, env []string) error {
 	for _, ul := range ulimits {
 		ulIdx[ul.Name] = ul
 	}
-	for name, ul := range c.daemon.config.Ulimits {
+	for name, ul := range c.daemon.configStore.Ulimits {
 		if _, exists := ulIdx[name]; !exists {
 			ulimits = append(ulimits, ul)
 		}
@@ -281,7 +281,7 @@ func populateCommand(c *Container, env []string) error {
 
 	c.command = &execdriver.Command{
 		ID:                 c.ID,
-		Rootfs:             c.RootfsPath(),
+		Rootfs:             c.rootfsPath(),
 		ReadonlyRootfs:     c.hostConfig.ReadonlyRootfs,
 		InitPath:           "/.dockerinit",
 		WorkingDir:         c.Config.WorkingDir,
@@ -377,7 +377,7 @@ func (container *Container) trySetNetworkMount(destination string, path string) 
 }
 
 func (container *Container) buildHostnameFile() error {
-	hostnamePath, err := container.GetRootResourcePath("hostname")
+	hostnamePath, err := container.getRootResourcePath("hostname")
 	if err != nil {
 		return err
 	}
@@ -404,13 +404,13 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 		joinOptions = append(joinOptions, libnetwork.JoinOptionUseDefaultSandbox())
 	}
 
-	container.HostsPath, err = container.GetRootResourcePath("hosts")
+	container.HostsPath, err = container.getRootResourcePath("hosts")
 	if err != nil {
 		return nil, err
 	}
 	joinOptions = append(joinOptions, libnetwork.JoinOptionHostsPath(container.HostsPath))
 
-	container.ResolvConfPath, err = container.GetRootResourcePath("resolv.conf")
+	container.ResolvConfPath, err = container.getRootResourcePath("resolv.conf")
 	if err != nil {
 		return nil, err
 	}
@@ -418,8 +418,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNS) > 0 {
 		dns = container.hostConfig.DNS
-	} else if len(container.daemon.config.DNS) > 0 {
-		dns = container.daemon.config.DNS
+	} else if len(container.daemon.configStore.DNS) > 0 {
+		dns = container.daemon.configStore.DNS
 	}
 
 	for _, d := range dns {
@@ -428,8 +428,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNSSearch) > 0 {
 		dnsSearch = container.hostConfig.DNSSearch
-	} else if len(container.daemon.config.DNSSearch) > 0 {
-		dnsSearch = container.daemon.config.DNSSearch
+	} else if len(container.daemon.configStore.DNSSearch) > 0 {
+		dnsSearch = container.daemon.configStore.DNSSearch
 	}
 
 	for _, ds := range dnsSearch {
@@ -485,7 +485,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 			logrus.Error(err)
 		}
 
-		if c != nil && !container.daemon.config.DisableBridge && container.hostConfig.NetworkMode.IsPrivate() {
+		if c != nil && !container.daemon.configStore.DisableBridge && container.hostConfig.NetworkMode.IsPrivate() {
 			logrus.Debugf("Update /etc/hosts of %s for alias %s with ip %s", c.ID, ref.Name, container.NetworkSettings.IPAddress)
 			joinOptions = append(joinOptions, libnetwork.JoinOptionParentUpdate(c.NetworkSettings.EndpointID, ref.Name, container.NetworkSettings.IPAddress))
 			if c.NetworkSettings.EndpointID != "" {
@@ -646,7 +646,7 @@ func (container *Container) updateNetworkSettings(n libnetwork.Network, ep libne
 	}
 
 	if container.hostConfig.NetworkMode == runconfig.NetworkMode("bridge") {
-		networkSettings.Bridge = container.daemon.config.Bridge.Iface
+		networkSettings.Bridge = container.daemon.configStore.Bridge.Iface
 	}
 
 	container.NetworkSettings = networkSettings
@@ -802,7 +802,7 @@ func (container *Container) secondaryNetworkRequired(primaryNetworkType string) 
 		return false
 	}
 
-	if container.daemon.config.DisableBridge {
+	if container.daemon.configStore.DisableBridge {
 		return false
 	}
 
@@ -836,7 +836,7 @@ func (container *Container) allocateNetwork() error {
 		return fmt.Errorf("conflicting options: publishing a service and network mode")
 	}
 
-	if runconfig.NetworkMode(networkDriver).IsBridge() && container.daemon.config.DisableBridge {
+	if runconfig.NetworkMode(networkDriver).IsBridge() && container.daemon.configStore.DisableBridge {
 		container.Config.NetworkDisabled = true
 		return nil
 	}
@@ -860,7 +860,7 @@ func (container *Container) allocateNetwork() error {
 		return err
 	}
 
-	return container.WriteHostConfig()
+	return container.writeHostConfig()
 }
 
 func (container *Container) configureNetwork(networkName, service, networkDriver string, canCreateNetwork bool) error {

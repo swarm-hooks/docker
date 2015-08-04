@@ -100,7 +100,7 @@ type Daemon struct {
 	repositories     *graph.TagStore
 	idIndex          *truncindex.TruncIndex
 	sysInfo          *sysinfo.SysInfo
-	config           *Config
+	configStore      *Config
 	containerGraphDB *graphdb.Database
 	driver           graphdriver.Driver
 	execDriver       execdriver.Driver
@@ -154,7 +154,7 @@ func (daemon *Daemon) containerRoot(id string) string {
 func (daemon *Daemon) load(id string) (*Container, error) {
 	container := daemon.newBaseContainer(id)
 
-	if err := container.FromDisk(); err != nil {
+	if err := container.fromDisk(); err != nil {
 		return nil, err
 	}
 
@@ -322,7 +322,7 @@ func (daemon *Daemon) restore() error {
 
 			// check the restart policy on the containers and restart any container with
 			// the restart policy of "always"
-			if daemon.config.AutoRestart && container.shouldRestart() {
+			if daemon.configStore.AutoRestart && container.shouldRestart() {
 				logrus.Debugf("Starting container %s", container.ID)
 
 				if err := container.Start(); err != nil {
@@ -553,8 +553,7 @@ func (daemon *Daemon) parents(name string) ([]string, error) {
 	return daemon.containerGraphDB.Parents(name)
 }
 
-// RegisterLink
-func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error {
+func (daemon *Daemon) registerLink(parent, child *Container, alias string) error {
 	fullName := filepath.Join(parent.Name, alias)
 	if !daemon.containerGraphDB.Exists(fullName) {
 		_, err := daemon.containerGraphDB.Set(fullName, child.ID)
@@ -745,7 +744,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 	d.repositories = repositories
 	d.idIndex = truncindex.NewTruncIndex([]string{})
 	d.sysInfo = sysInfo
-	d.config = config
+	d.configStore = config
 	d.sysInitPath = sysInitPath
 	d.execDriver = ed
 	d.statsCollector = newStatsCollector(1 * time.Second)
@@ -880,8 +879,8 @@ func (daemon *Daemon) Repositories() *graph.TagStore {
 	return daemon.repositories
 }
 
-func (daemon *Daemon) Config() *Config {
-	return daemon.config
+func (daemon *Daemon) config() *Config {
+	return daemon.configStore
 }
 
 func (daemon *Daemon) systemConfig() *sysinfo.SysInfo {
@@ -960,7 +959,7 @@ func (daemon *Daemon) setHostConfig(container *Container, hostConfig *runconfig.
 	container.Lock()
 	defer container.Unlock()
 	// Register any links from the host config before starting the container
-	if err := daemon.RegisterLinks(container, hostConfig); err != nil {
+	if err := daemon.registerLinks(container, hostConfig); err != nil {
 		return err
 	}
 

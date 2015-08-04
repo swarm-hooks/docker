@@ -84,8 +84,8 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 		InitPath:           initPath,
 		NCPU:               runtime.NumCPU(),
 		MemTotal:           meminfo.MemTotal,
-		DockerRootDir:      daemon.Config().Root,
-		Labels:             daemon.Config().Labels,
+		DockerRootDir:      daemon.config().Root,
+		Labels:             daemon.config().Labels,
 		ExperimentalBuild:  utils.ExperimentalBuild(),
 	}
 

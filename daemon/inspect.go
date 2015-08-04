@@ -72,7 +72,7 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 		ExecDriver:      container.ExecDriver,
 		MountLabel:      container.MountLabel,
 		ProcessLabel:    container.ProcessLabel,
-		ExecIDs:         container.GetExecIDs(),
+		ExecIDs:         container.getExecIDs(),
 		HostConfig:      &hostConfig,
 	}
 

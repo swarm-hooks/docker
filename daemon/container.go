@@ -89,7 +89,7 @@ type CommonContainer struct {
 	logCopier *logger.Copier
 }
 
-func (container *Container) FromDisk() error {
+func (container *Container) fromDisk() error {
 	pth, err := container.jsonPath()
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func (container *Container) toDisk() error {
 		return err
 	}
 
-	return container.WriteHostConfig()
+	return container.writeHostConfig()
 }
 
 func (container *Container) ToDisk() error {
@@ -164,7 +164,7 @@ func (container *Container) readHostConfig() error {
 	return json.NewDecoder(f).Decode(&container.hostConfig)
 }
 
-func (container *Container) WriteHostConfig() error {
+func (container *Container) writeHostConfig() error {
 	data, err := json.Marshal(container.hostConfig)
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func (container *Container) logEvent(action string) {
 	)
 }
 
-// Evaluates `path` in the scope of the container's basefs, with proper path
+// GetResourcePath evaluates `path` in the scope of the container's basefs, with proper path
 // sanitisation. Symlinks are all scoped to the basefs of the container, as
 // though the container's basefs was `/`.
 //
@@ -220,7 +220,7 @@ func (container *Container) GetResourcePath(path string) (string, error) {
 //       if no component of the returned path changes (such as a component
 //       symlinking to a different path) between using this method and using the
 //       path. See symlink.FollowSymlinkInScope for more details.
-func (container *Container) GetRootResourcePath(path string) (string, error) {
+func (container *Container) getRootResourcePath(path string) (string, error) {
 	// IMPORTANT - These are paths on the OS where the daemon is running, hence
 	// any filepath operations must be done in an OS agnostic way.
 	cleanPath := filepath.Join(string(os.PathSeparator), path)
@@ -595,16 +595,16 @@ func (container *Container) Unmount() error {
 }
 
 func (container *Container) hostConfigPath() (string, error) {
-	return container.GetRootResourcePath("hostconfig.json")
+	return container.getRootResourcePath("hostconfig.json")
 }
 
 func (container *Container) jsonPath() (string, error) {
-	return container.GetRootResourcePath("config.json")
+	return container.getRootResourcePath("config.json")
 }
 
 // This method must be exported to be used from the lxc template
 // This directory is only usable when the container is running
-func (container *Container) RootfsPath() string {
+func (container *Container) rootfsPath() string {
 	return container.basefs
 }
 
@@ -729,7 +729,7 @@ func (container *Container) getLogger() (logger.Logger, error) {
 
 	// Set logging file for "json-logger"
 	if cfg.Type == jsonfilelog.Name {
-		ctx.LogPath, err = container.GetRootResourcePath(fmt.Sprintf("%s-json.log", container.ID))
+		ctx.LogPath, err = container.getRootResourcePath(fmt.Sprintf("%s-json.log", container.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -804,7 +804,7 @@ func (container *Container) LogDriverType() string {
 	return container.hostConfig.LogConfig.Type
 }
 
-func (container *Container) GetExecIDs() []string {
+func (container *Container) getExecIDs() []string {
 	return container.execCommands.List()
 }
 

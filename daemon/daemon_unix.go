@@ -481,13 +481,13 @@ func setupInitLayer(initLayer string) error {
 	return nil
 }
 
-// NetworkAPIRouter why can't we inline this into server-experimental?
+// NetworkAPIRouter perhaps we inline this into server-experimental
 func (daemon *Daemon) NetworkAPIRouter() func(w http.ResponseWriter, req *http.Request) {
 	return nwapi.NewHTTPHandler(daemon.netController)
 }
 
 // RegisterLinks writes the links to a file.
-func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.HostConfig) error {
+func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.HostConfig) error {
 	if hostConfig == nil || hostConfig.Links == nil {
 		return nil
 	}
@@ -512,7 +512,7 @@ func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.
 		if child.hostConfig.NetworkMode.IsHost() {
 			return runconfig.ErrConflictHostNetworkAndLinks
 		}
-		if err := daemon.RegisterLink(container, child, alias); err != nil {
+		if err := daemon.registerLink(container, child, alias); err != nil {
 			return err
 		}
 	}
@@ -520,7 +520,7 @@ func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.
 	// After we load all the links into the daemon
 	// set them to nil on the hostconfig
 	hostConfig.Links = nil
-	if err := container.WriteHostConfig(); err != nil {
+	if err := container.writeHostConfig(); err != nil {
 		return err
 	}
 
