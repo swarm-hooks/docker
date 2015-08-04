@@ -8,6 +8,7 @@ source "${MAKEDIR}/.validate"
 # packages=( $(go list ./... 2> /dev/null | grep -vE "^github.com/docker/docker/vendor" || true ) )
 
 packages=(
+	api
 	api/server
 	api/client
 	api/client/ps
@@ -19,6 +20,7 @@ packages=(
 	daemon/execdriver
 	daemon/execdriver/execdrivers
 	daemon/execdriver/lxc
+	daemon/execdriver/native
 	daemon/execdriver/native/template
 	daemon/graphdriver/aufs
 	daemon/graphdriver/devmapper
