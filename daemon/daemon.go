@@ -354,7 +354,7 @@ func (daemon *Daemon) mergeAndVerifyConfig(config *runconfig.Config, img *image.
 	return nil
 }
 
-func (daemon *Daemon) generateIdAndName(name string) (string, string, error) {
+func (daemon *Daemon) generateIDAndName(name string) (string, string, error) {
 	var (
 		err error
 		id  = stringid.GenerateNonCryptoID()
@@ -463,7 +463,7 @@ func (daemon *Daemon) newContainer(name string, config *runconfig.Config, imgID 
 		id  string
 		err error
 	)
-	id, name, err = daemon.generateIdAndName(name)
+	id, name, err = daemon.generateIDAndName(name)
 	if err != nil {
 		return nil, err
 	}
@@ -543,6 +543,7 @@ func (daemon *Daemon) Parents(name string) ([]string, error) {
 	return daemon.containerGraph.Parents(name)
 }
 
+// RegisterLink
 func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error {
 	fullName := filepath.Join(parent.Name, alias)
 	if !daemon.containerGraph.Exists(fullName) {
@@ -552,6 +553,7 @@ func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error
 	return nil
 }
 
+// NewDaemon
 func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemon, err error) {
 	setDefaultMtu(config)
 
@@ -749,6 +751,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 	return d, nil
 }
 
+// Shutdown
 func (daemon *Daemon) Shutdown() error {
 	if daemon.containers != nil {
 		group := sync.WaitGroup{}

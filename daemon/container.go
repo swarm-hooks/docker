@@ -49,7 +49,7 @@ func (e ErrContainerNotRunning) Error() string {
 	return fmt.Sprintf("Container %s is not running", e.id)
 }
 
-type StreamConfig struct {
+type streamConfig struct {
 	stdout    *broadcastwriter.BroadcastWriter
 	stderr    *broadcastwriter.BroadcastWriter
 	stdin     io.ReadCloser
@@ -59,7 +59,7 @@ type StreamConfig struct {
 // CommonContainer holds the settings for a container which are applicable
 // across all platforms supported by the daemon.
 type CommonContainer struct {
-	StreamConfig
+	streamConfig
 
 	*State `json:"State"` // Needed for remote api version <= 1.11
 	root   string         // Path to the "home" of the container, including metadata.
@@ -310,7 +310,7 @@ func (container *Container) Output() (output []byte, err error) {
 	return output, err
 }
 
-// StreamConfig.StdinPipe returns a WriteCloser which can be used to feed data
+// streamConfig.StdinPipe returns a WriteCloser which can be used to feed data
 // to the standard input of the container's active process.
 // Container.StdoutPipe and Container.StderrPipe each return a ReadCloser
 // which can be used to retrieve the standard output (and error) generated
@@ -318,17 +318,17 @@ func (container *Container) Output() (output []byte, err error) {
 // copied and delivered to all StdoutPipe and StderrPipe consumers, using
 // a kind of "broadcaster".
 
-func (streamConfig *StreamConfig) StdinPipe() io.WriteCloser {
+func (streamConfig *streamConfig) StdinPipe() io.WriteCloser {
 	return streamConfig.stdinPipe
 }
 
-func (streamConfig *StreamConfig) StdoutPipe() io.ReadCloser {
+func (streamConfig *streamConfig) StdoutPipe() io.ReadCloser {
 	reader, writer := io.Pipe()
 	streamConfig.stdout.AddWriter(writer)
 	return ioutils.NewBufReader(reader)
 }
 
-func (streamConfig *StreamConfig) StderrPipe() io.ReadCloser {
+func (streamConfig *streamConfig) StderrPipe() io.ReadCloser {
 	reader, writer := io.Pipe()
 	streamConfig.stderr.AddWriter(writer)
 	return ioutils.NewBufReader(reader)
@@ -358,6 +358,11 @@ func (container *Container) cleanup() {
 	container.UnmountVolumes(false)
 }
 
+// KillSig sends the container the given signal. This wrapper for the
+// host specific kill command prepares the container before attempting
+// to send the signal. An error is returned if the container is paused
+// or not running, or if there is a problem returned from the
+// underlying kill command.
 func (container *Container) KillSig(sig int) error {
 	logrus.Debugf("Sending %d to %s", sig, container.ID)
 	container.Lock()
@@ -565,7 +570,7 @@ func (container *Container) Export() (archive.Archive, error) {
 	return arch, err
 }
 
-// Mount sets container.basefs 
+// Mount sets container.basefs
 func (container *Container) Mount() error {
 	return container.daemon.Mount(container)
 }
@@ -840,21 +845,21 @@ func (container *Container) monitorExec(execConfig *execConfig, callback execdri
 		err      error
 		exitCode int
 	)
-	pipes := execdriver.NewPipes(execConfig.StreamConfig.stdin, execConfig.StreamConfig.stdout, execConfig.StreamConfig.stderr, execConfig.OpenStdin)
+	pipes := execdriver.NewPipes(execConfig.streamConfig.stdin, execConfig.streamConfig.stdout, execConfig.streamConfig.stderr, execConfig.OpenStdin)
 	exitCode, err = container.daemon.Exec(container, execConfig, pipes, callback)
 	if err != nil {
 		logrus.Errorf("Error running command in existing container %s: %s", container.ID, err)
 	}
 	logrus.Debugf("Exec task in container %s exited with code %d", container.ID, exitCode)
 	if execConfig.OpenStdin {
-		if err := execConfig.StreamConfig.stdin.Close(); err != nil {
+		if err := execConfig.streamConfig.stdin.Close(); err != nil {
 			logrus.Errorf("Error closing stdin while running in %s: %s", container.ID, err)
 		}
 	}
-	if err := execConfig.StreamConfig.stdout.Clean(); err != nil {
+	if err := execConfig.streamConfig.stdout.Clean(); err != nil {
 		logrus.Errorf("Error closing stdout while running in %s: %s", container.ID, err)
 	}
-	if err := execConfig.StreamConfig.stderr.Clean(); err != nil {
+	if err := execConfig.streamConfig.stderr.Clean(); err != nil {
 		logrus.Errorf("Error closing stderr while running in %s: %s", container.ID, err)
 	}
 	if execConfig.ProcessConfig.Terminal != nil {
@@ -868,13 +873,14 @@ func (container *Container) monitorExec(execConfig *execConfig, callback execdri
 	return err
 }
 
-func (c *Container) Attach(stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) chan error {
-	return attach(&c.StreamConfig, c.Config.OpenStdin, c.Config.StdinOnce, c.Config.Tty, stdin, stdout, stderr)
+//
+func (container *Container) Attach(stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) chan error {
+	return attach(&container.streamConfig, container.Config.OpenStdin, container.Config.StdinOnce, container.Config.Tty, stdin, stdout, stderr)
 }
 
-func (c *Container) AttachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer, logs, stream bool) error {
+func (container *Container) AttachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer, logs, stream bool) error {
 	if logs {
-		logDriver, err := c.getLogger()
+		logDriver, err := container.getLogger()
 		if err != nil {
 			return err
 		}
@@ -904,7 +910,7 @@ func (c *Container) AttachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer
 		}
 	}
 
-	c.LogEvent("attach")
+	container.LogEvent("attach")
 
 	//stream
 	if stream {
@@ -918,17 +924,17 @@ func (c *Container) AttachWithLogs(stdin io.ReadCloser, stdout, stderr io.Writer
 			}()
 			stdinPipe = r
 		}
-		<-c.Attach(stdinPipe, stdout, stderr)
+		<-container.Attach(stdinPipe, stdout, stderr)
 		// If we are in stdinonce mode, wait for the process to end
 		// otherwise, simply return
-		if c.Config.StdinOnce && !c.Config.Tty {
-			c.WaitStop(-1 * time.Second)
+		if container.Config.StdinOnce && !container.Config.Tty {
+			container.WaitStop(-1 * time.Second)
 		}
 	}
 	return nil
 }
 
-func attach(streamConfig *StreamConfig, openStdin, stdinOnce, tty bool, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) chan error {
+func attach(streamConfig *streamConfig, openStdin, stdinOnce, tty bool, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) chan error {
 	var (
 		cStdout, cStderr io.ReadCloser
 		cStdin           io.WriteCloser

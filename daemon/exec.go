@@ -23,7 +23,7 @@ type execConfig struct {
 	Running       bool
 	ExitCode      int
 	ProcessConfig *execdriver.ProcessConfig
-	StreamConfig
+	streamConfig
 	OpenStdin  bool
 	OpenStderr bool
 	OpenStdout bool
@@ -128,6 +128,7 @@ func (d *Daemon) getActiveContainer(name string) (*Container, error) {
 	return container, nil
 }
 
+// ContainerExecCreate sets up an exec in a running container. 
 func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, error) {
 	// Not all drivers support Exec (LXC for example)
 	if err := checkExecSupport(d.execDriver.Name()); err != nil {
@@ -159,7 +160,7 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 		OpenStdin:     config.AttachStdin,
 		OpenStdout:    config.AttachStdout,
 		OpenStderr:    config.AttachStderr,
-		StreamConfig:  StreamConfig{},
+		streamConfig:  streamConfig{},
 		ProcessConfig: processConfig,
 		Container:     container,
 		Running:       false,
@@ -171,9 +172,10 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 	container.LogEvent("exec_create: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
 
 	return execConfig.ID, nil
-
 }
 
+// ContainerExecStart starts a previously set up exec instance. The
+// std streams are set up.
 func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) error {
 
 	var (
@@ -219,16 +221,16 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 		cStderr = stderr
 	}
 
-	execConfig.StreamConfig.stderr = broadcastwriter.New()
-	execConfig.StreamConfig.stdout = broadcastwriter.New()
+	execConfig.streamConfig.stderr = broadcastwriter.New()
+	execConfig.streamConfig.stdout = broadcastwriter.New()
 	// Attach to stdin
 	if execConfig.OpenStdin {
-		execConfig.StreamConfig.stdin, execConfig.StreamConfig.stdinPipe = io.Pipe()
+		execConfig.streamConfig.stdin, execConfig.streamConfig.stdinPipe = io.Pipe()
 	} else {
-		execConfig.StreamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
+		execConfig.streamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
 	}
 
-	attachErr := attach(&execConfig.StreamConfig, execConfig.OpenStdin, true, execConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
+	attachErr := attach(&execConfig.streamConfig, execConfig.OpenStdin, true, execConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
 
 	execErr := make(chan error)
 
