@@ -17,6 +17,9 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
+// execConfig holds the configurations for execs.
+//
+// perhaps this should be exported?
 type execConfig struct {
 	sync.Mutex
 	ID            string
@@ -239,7 +242,7 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	// the exitStatus) even after the cmd is done running.
 
 	go func() {
-		if err := container.Exec(execConfig); err != nil {
+		if err := container.exec(execConfig); err != nil {
 			execErr <- fmt.Errorf("Cannot run exec command %s in container %s: %s", execName, container.ID, err)
 		}
 	}()

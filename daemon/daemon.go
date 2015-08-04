@@ -891,10 +891,14 @@ func (daemon *Daemon) systemInitPath() string {
 	return daemon.sysInitPath
 }
 
+// GraphDriver returns the currently used driver for processing
+// container layers.
 func (daemon *Daemon) GraphDriver() graphdriver.Driver {
 	return daemon.driver
 }
 
+// ExecutionDriver returns the currently used driver for creating and
+// starting execs in a container.
 func (daemon *Daemon) ExecutionDriver() execdriver.Driver {
 	return daemon.execDriver
 }

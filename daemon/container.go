@@ -227,6 +227,10 @@ func (container *Container) getRootResourcePath(path string) (string, error) {
 	return symlink.FollowSymlinkInScope(filepath.Join(container.root, cleanPath), container.root)
 }
 
+// Start prepares the container to run by setting up everything the
+// container needs, such as storage and networking, as well as links
+// between containers. The container is left waiting for a signal to
+// begin running.
 func (container *Container) Start() (err error) {
 	container.Lock()
 	defer container.Unlock()
@@ -288,7 +292,7 @@ func (container *Container) Start() (err error) {
 	return container.waitForStart()
 }
 
-func (container *Container) Run() error {
+func (container *Container) run() error {
 	if err := container.Start(); err != nil {
 		return err
 	}
@@ -613,7 +617,7 @@ func validateID(id string) error {
 	return nil
 }
 
-func (container *Container) Copy(resource string) (rc io.ReadCloser, err error) {
+func (container *Container) copy(resource string) (rc io.ReadCloser, err error) {
 	container.Lock()
 
 	defer func() {
@@ -797,7 +801,7 @@ func (container *Container) getExecIDs() []string {
 	return container.execCommands.List()
 }
 
-func (container *Container) Exec(execConfig *execConfig) error {
+func (container *Container) exec(execConfig *execConfig) error {
 	container.Lock()
 	defer container.Unlock()
 

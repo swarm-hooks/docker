@@ -29,7 +29,7 @@ func (daemon *Daemon) ContainerCopy(name string, res string) (io.ReadCloser, err
 		res = res[1:]
 	}
 
-	return container.Copy(res)
+	return container.copy(res)
 }
 
 // ContainerStatPath stats the filesystem resource at the specified path in the
