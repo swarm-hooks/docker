@@ -9,10 +9,12 @@ import (
 	"github.com/docker/docker/pkg/units"
 )
 
+// State holds the current container state, and has methods to get and
+// set the state.
 type State struct {
 	sync.Mutex
-	Running           bool
-	Paused            bool
+	Running           bool // Why do we have both of these if a container
+	Paused            bool // cannot be paused and running at the same time?
 	Restarting        bool
 	OOMKilled         bool
 	removalInProgress bool // Not need for this to be persistent on disk.
@@ -25,6 +27,7 @@ type State struct {
 	waitChan          chan struct{}
 }
 
+// NewState creates a default state object with a fresh channel for state changes.
 func NewState() *State {
 	return &State{
 		waitChan: make(chan struct{}),
@@ -227,26 +230,7 @@ func (s *State) setError(err error) {
 	s.Error = err.Error()
 }
 
-func (s *State) IsRestarting() bool {
-	s.Lock()
-	res := s.Restarting
-	s.Unlock()
-	return res
-}
-
-func (s *State) SetPaused() {
-	s.Lock()
-	s.Paused = true
-	s.Unlock()
-}
-
-func (s *State) SetUnpaused() {
-	s.Lock()
-	s.Paused = false
-	s.Unlock()
-}
-
-func (s *State) IsPaused() bool {
+func (s *State) isPaused() bool {
 	s.Lock()
 	res := s.Paused
 	s.Unlock()

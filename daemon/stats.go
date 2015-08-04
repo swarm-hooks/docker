@@ -18,7 +18,7 @@ type ContainerStatsConfig struct {
 	Stop      <-chan bool
 }
 
-// ContainerStats writes information about the container to the stream
+// ContassinerStats writes information about the container to the stream
 // given in the config object.
 func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) error {
 	updates, err := daemon.SubscribeToContainerStats(name)
@@ -38,11 +38,11 @@ func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) 
 			update.Stats.Interfaces = nwStats
 		}
 		ss := convertStatsToAPITypes(update.Stats)
-		ss.PreCpuStats = preCpuStats
+		ss.PreCpuStats = preCPUStats
 		ss.MemoryStats.Limit = uint64(update.MemoryLimit)
 		ss.Read = update.Read
 		ss.CpuStats.SystemUsage = update.SystemUsage
-		preCpuStats = ss.CpuStats
+		preCPUStats = ss.CpuStats
 		return ss
 	}
 

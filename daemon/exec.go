@@ -122,7 +122,7 @@ func (d *Daemon) getActiveContainer(name string) (*Container, error) {
 	if !container.IsRunning() {
 		return nil, fmt.Errorf("Container %s is not running", name)
 	}
-	if container.IsPaused() {
+	if container.isPaused() {
 		return nil, fmt.Errorf("Container %s is paused, unpause the container before exec", name)
 	}
 	return container, nil

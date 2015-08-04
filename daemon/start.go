@@ -13,7 +13,7 @@ func (daemon *Daemon) ContainerStart(name string, hostConfig *runconfig.HostConf
 		return err
 	}
 
-	if container.IsPaused() {
+	if container.isPaused() {
 		return fmt.Errorf("Cannot start a paused container, try unpause instead.")
 	}
 
