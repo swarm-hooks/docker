@@ -37,6 +37,7 @@ import (
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
+// DefaultPathEnv is unix style list of directories to search for executables.
 const DefaultPathEnv = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 type Container struct {
@@ -49,7 +50,6 @@ type Container struct {
 	HostsPath       string
 	MountPoints     map[string]*mountPoint
 	ResolvConfPath  string
-	UpdateDns       bool
 	Volumes         map[string]string // Deprecated since 1.7, kept for backwards compatibility
 	VolumesRW       map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
 }
