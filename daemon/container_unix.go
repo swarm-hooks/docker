@@ -40,6 +40,7 @@ import (
 // DefaultPathEnv is unix style list of directories to search for executables.
 const DefaultPathEnv = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+// Container holds the details 
 type Container struct {
 	CommonContainer
 
@@ -50,6 +51,7 @@ type Container struct {
 	HostsPath       string
 	MountPoints     map[string]*mountPoint
 	ResolvConfPath  string
+
 	Volumes         map[string]string // Deprecated since 1.7, kept for backwards compatibility
 	VolumesRW       map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
 }
@@ -322,7 +324,7 @@ func mergeDevices(defaultDevices, userDevices []*configs.Device) []*configs.Devi
 	return append(devs, userDevices...)
 }
 
-// GetSize, return real size, virtual size
+// GetSize returns the real size & virtual size of the container.
 func (container *Container) GetSize() (int64, int64) {
 	var (
 		sizeRw, sizeRootfs int64

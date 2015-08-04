@@ -486,6 +486,9 @@ func (daemon *Daemon) newContainer(name string, config *runconfig.Config, imgID 
 	return &base, err
 }
 
+// GetFullContainerName returns a constructed container name. I think
+// it has to do with the fact that a container is a file on disek and
+// this is sort of just creating a file name.
 func GetFullContainerName(name string) (string, error) {
 	if name == "" {
 		return "", fmt.Errorf("Container name cannot be empty")
@@ -496,6 +499,7 @@ func GetFullContainerName(name string) (string, error) {
 	return name, nil
 }
 
+// GetByName returns a container given a name.
 func (daemon *Daemon) GetByName(name string) (*Container, error) {
 	fullName, err := GetFullContainerName(name)
 	if err != nil {
@@ -512,6 +516,7 @@ func (daemon *Daemon) GetByName(name string) (*Container, error) {
 	return e, nil
 }
 
+//
 func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
 	name, err := GetFullContainerName(name)
 	if err != nil {
@@ -534,6 +539,7 @@ func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
 	return children, nil
 }
 
+// Parents
 func (daemon *Daemon) Parents(name string) ([]string, error) {
 	name, err := GetFullContainerName(name)
 	if err != nil {
@@ -757,7 +763,8 @@ func (daemon *Daemon) Shutdown() error {
 		group := sync.WaitGroup{}
 		logrus.Debug("starting clean shutdown of all containers...")
 		for _, container := range daemon.List() {
-			c := container
+			var c *Container
+			c = container
 			if c.IsRunning() {
 				logrus.Debugf("stopping %s", c.ID)
 				group.Add(1)

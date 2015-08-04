@@ -60,7 +60,7 @@ type streamConfig struct {
 // across all platforms supported by the daemon.
 type CommonContainer struct {
 	streamConfig
-
+	// embed for Container to support states directly.
 	*State `json:"State"` // Needed for remote api version <= 1.11
 	root   string         // Path to the "home" of the container, including metadata.
 	basefs string         // Path to the graphdriver mountpoint

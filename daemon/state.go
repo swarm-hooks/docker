@@ -10,7 +10,8 @@ import (
 )
 
 // State holds the current container state, and has methods to get and
-// set the state.
+// set the state. Container has an embed, which allows all of the
+// functions defined against State to run against Container.
 type State struct {
 	sync.Mutex
 	Running           bool // Why do we have both of these if a container
@@ -245,6 +246,12 @@ func (s *State) setRemovalInProgress() error {
 	}
 	s.removalInProgress = true
 	return nil
+}
+
+func (s *State) resetRemovalInProgress() {
+	s.Lock()
+	s.removalInProgress = false
+	s.Unlock()
 }
 
 func (s *State) setDead() {
