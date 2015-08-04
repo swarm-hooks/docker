@@ -13,7 +13,7 @@ func (daemon *Daemon) ContainerExport(name string, out io.Writer) error {
 		return err
 	}
 
-	data, err := container.Export()
+	data, err := container.export()
 	if err != nil {
 		return fmt.Errorf("%s: %s", name, err)
 	}

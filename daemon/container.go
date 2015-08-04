@@ -297,7 +297,7 @@ func (container *Container) Run() error {
 	return nil
 }
 
-func (container *Container) Output() (output []byte, err error) {
+func (container *Container) output() (output []byte, err error) {
 	pipe := container.StdoutPipe()
 	defer pipe.Close()
 	if err := container.Start(); err != nil {
@@ -403,7 +403,7 @@ func (container *Container) killPossiblyDeadProcess(sig int) error {
 	return err
 }
 
-func (container *Container) Pause() error {
+func (container *Container) pause() error {
 	container.Lock()
 	defer container.Unlock()
 
@@ -425,7 +425,7 @@ func (container *Container) Pause() error {
 	return nil
 }
 
-func (container *Container) Unpause() error {
+func (container *Container) unpause() error {
 	container.Lock()
 	defer container.Unlock()
 
@@ -447,14 +447,14 @@ func (container *Container) Unpause() error {
 	return nil
 }
 
-// Kill
+// Kill forcefully terminates a container.
 func (container *Container) Kill() error {
 	if !container.IsRunning() {
 		return ErrContainerNotRunning{container.ID}
 	}
 
 	// 1. Send SIGKILL
-	if err := container.killPossiblyDeadProcess(9); err != nil {
+	if err := container.killPossiblyDeadProcess(int(syscall.SIGKILL)); err != nil {
 		// While normally we might "return err" here we're not going to
 		// because if we can't stop the container by this point then
 		// its probably because its already stopped. Meaning, between
@@ -494,9 +494,9 @@ func (container *Container) Stop(seconds int) error {
 	}
 
 	// 1. Send a SIGTERM
-	if err := container.killPossiblyDeadProcess(15); err != nil {
+	if err := container.killPossiblyDeadProcess(int(syscall.SIGABRT)); err != nil {
 		logrus.Infof("Failed to send SIGTERM to the process, force killing")
-		if err := container.killPossiblyDeadProcess(9); err != nil {
+		if err := container.killPossiblyDeadProcess(int(syscall.SIGKILL)); err != nil {
 			return err
 		}
 	}
@@ -549,7 +549,7 @@ func (container *Container) Resize(h, w int) error {
 	return nil
 }
 
-func (container *Container) Export() (archive.Archive, error) {
+func (container *Container) export() (archive.Archive, error) {
 	if err := container.Mount(); err != nil {
 		return nil, err
 	}
@@ -574,22 +574,20 @@ func (container *Container) Mount() error {
 }
 
 func (container *Container) changes() ([]archive.Change, error) {
+	container.Lock()
+	defer container.Unlock()
 	return container.daemon.Changes(container)
 }
 
-func (container *Container) Changes() ([]archive.Change, error) {
-	container.Lock()
-	defer container.Unlock()
-	return container.changes()
-}
-
-func (container *Container) GetImage() (*image.Image, error) {
+func (container *Container) getImage() (*image.Image, error) {
 	if container.daemon == nil {
 		return nil, fmt.Errorf("Can't get image of unregistered container")
 	}
 	return container.daemon.graph.Get(container.ImageID)
 }
 
+// Unmount asks the daemon to release the layered filesystems that are
+// mounted by the container.
 func (container *Container) Unmount() error {
 	return container.daemon.unmount(container)
 }
@@ -687,7 +685,7 @@ func (container *Container) Copy(resource string) (rc io.ReadCloser, err error) 
 }
 
 // Returns true if the container exposes a certain port
-func (container *Container) Exposes(p nat.Port) bool {
+func (container *Container) exposes(p nat.Port) bool {
 	_, exists := container.Config.ExposedPorts[p]
 	return exists
 }
@@ -775,7 +773,7 @@ func (container *Container) waitForStart() error {
 	return nil
 }
 
-func (container *Container) GetProcessLabel() string {
+func (container *Container) getProcessLabel() string {
 	// even if we have a process label return "" if we are running
 	// in privileged mode
 	if container.hostConfig.Privileged {
@@ -784,24 +782,15 @@ func (container *Container) GetProcessLabel() string {
 	return container.ProcessLabel
 }
 
-func (container *Container) GetMountLabel() string {
+func (container *Container) getMountLabel() string {
 	if container.hostConfig.Privileged {
 		return ""
 	}
 	return container.MountLabel
 }
 
-func (container *Container) Stats() (*execdriver.ResourceStats, error) {
+func (container *Container) stats() (*execdriver.ResourceStats, error) {
 	return container.daemon.stats(container)
-}
-
-func (container *Container) LogDriverType() string {
-	container.Lock()
-	defer container.Unlock()
-	if container.hostConfig.LogConfig.Type == "" {
-		return container.daemon.defaultLogConfig.Type
-	}
-	return container.hostConfig.LogConfig.Type
 }
 
 func (container *Container) getExecIDs() []string {
@@ -871,7 +860,8 @@ func (container *Container) monitorExec(execConfig *execConfig, callback execdri
 	return err
 }
 
-//
+// Attach connects to the containers TTY, delegating to standard
+// streams or websockets depending on the configuration.
 func (container *Container) Attach(stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) chan error {
 	return attach(&container.streamConfig, container.Config.OpenStdin, container.Config.StdinOnce, container.Config.Tty, stdin, stdout, stderr)
 }

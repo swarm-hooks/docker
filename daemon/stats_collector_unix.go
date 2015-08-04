@@ -107,7 +107,7 @@ func (s *statsCollector) run() {
 		s.m.Unlock()
 
 		for _, pair := range pairs {
-			stats, err := pair.container.Stats()
+			stats, err := pair.container.stats()
 			if err != nil {
 				if err != execdriver.ErrNotRunning {
 					logrus.Errorf("collecting stats for %s: %v", pair.container.ID, err)

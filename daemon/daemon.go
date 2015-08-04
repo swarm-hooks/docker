@@ -810,7 +810,7 @@ func (daemon *Daemon) Shutdown() error {
 // Mount sets container.basefs
 // (is it not set coming in? why is it unset?)
 func (daemon *Daemon) Mount(container *Container) error {
-	dir, err := daemon.driver.Get(container.ID, container.GetMountLabel())
+	dir, err := daemon.driver.Get(container.ID, container.getMountLabel())
 	if err != nil {
 		return fmt.Errorf("Error getting container %s from driver %s: %s", container.ID, daemon.driver, err)
 	}
