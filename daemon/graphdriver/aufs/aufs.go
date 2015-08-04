@@ -104,8 +104,13 @@ func Init(root string, options []string) (graphdriver.Driver, error) {
 		active: make(map[string]int),
 	}
 
-	// Create the root aufs driver dir
+	// Create the root aufs driver dir and return
+	// if it already exists
+	// If not populate the dir structure
 	if err := os.MkdirAll(root, 0755); err != nil {
+		if os.IsExist(err) {
+			return a, nil
+		}
 		return nil, err
 	}
 
@@ -113,7 +118,6 @@ func Init(root string, options []string) (graphdriver.Driver, error) {
 		return nil, err
 	}
 
-	// Populate the dir structure
 	for _, p := range paths {
 		if err := os.MkdirAll(path.Join(root, p), 0755); err != nil {
 			return nil, err

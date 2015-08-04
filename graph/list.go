@@ -18,20 +18,25 @@ var acceptedImageFilterTags = map[string]struct{}{
 	"label":    {},
 }
 
-// byCreated is a temporary type used to sort a list of images by creation
-// time.
+// ImagesConfig defines the criteria to obtain a list of images.
+type ImagesConfig struct {
+	// Filters is supported list of filters used to get list of images.
+	Filters string
+	// Filter the list of images by name.
+	Filter string
+	// All inditest that all the images will be returned in the list, if set to true.
+	All bool
+}
+
+// byCreated is a temporary type used to sort list of images on their field 'Created'.
 type byCreated []*types.Image
 
 func (r byCreated) Len() int           { return len(r) }
 func (r byCreated) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r byCreated) Less(i, j int) bool { return r[i].Created < r[j].Created }
 
-// Images returns a filtered list of images. filterArgs is a JSON-encoded set
-// of filter arguments which will be interpreted by pkg/parsers/filters.
-// filter is a shell glob string applied to repository names. The argument
-// named all controls whether all images in the graph are filtered, or just
-// the heads.
-func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, error) {
+// Images provide list of images based on selection criteria.
+func (s *TagStore) Images(config *ImagesConfig) ([]*types.Image, error) {
 	var (
 		allImages  map[string]*image.Image
 		err        error
@@ -39,7 +44,7 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 		filtLabel  = false
 	)
 
-	imageFilters, err := filters.FromParam(filterArgs)
+	imageFilters, err := filters.FromParam(config.Filters)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +64,7 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 
 	_, filtLabel = imageFilters["label"]
 
-	if all && filtTagged {
+	if config.All && filtTagged {
 		allImages = s.graph.Map()
 	} else {
 		allImages = s.graph.Heads()
@@ -68,8 +73,8 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 	lookup := make(map[string]*types.Image)
 	s.Lock()
 	for repoName, repository := range s.Repositories {
-		if filter != "" {
-			if match, _ := path.Match(filter, repoName); !match {
+		if config.Filter != "" {
+			if match, _ := path.Match(config.Filter, repoName); !match {
 				continue
 			}
 		}
@@ -101,7 +106,7 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 					newImage.ID = image.ID
 					newImage.Created = int(image.Created.Unix())
 					newImage.Size = int(image.Size)
-					newImage.VirtualSize = int(s.graph.GetParentsSize(image) + image.Size)
+					newImage.VirtualSize = int(s.graph.GetParentsSize(image, 0) + image.Size)
 					newImage.Labels = image.ContainerConfig.Labels
 
 					if utils.DigestReference(ref) {
@@ -126,7 +131,7 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 	}
 
 	// Display images which aren't part of a repository/tag
-	if filter == "" || filtLabel {
+	if config.Filter == "" || filtLabel {
 		for _, image := range allImages {
 			if !imageFilters.MatchKVList("label", image.ContainerConfig.Labels) {
 				continue
@@ -138,7 +143,7 @@ func (s *TagStore) Images(filterArgs, filter string, all bool) ([]*types.Image, 
 			newImage.ID = image.ID
 			newImage.Created = int(image.Created.Unix())
 			newImage.Size = int(image.Size)
-			newImage.VirtualSize = int(s.graph.GetParentsSize(image) + image.Size)
+			newImage.VirtualSize = int(s.graph.GetParentsSize(image, 0) + image.Size)
 			newImage.Labels = image.ContainerConfig.Labels
 
 			images = append(images, newImage)

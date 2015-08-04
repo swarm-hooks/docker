@@ -2,7 +2,6 @@
 
 package windows
 
-// Clean implements the exec driver Driver interface.
-func (d *Driver) Clean(id string) error {
+func (d *driver) Clean(id string) error {
 	return nil
 }

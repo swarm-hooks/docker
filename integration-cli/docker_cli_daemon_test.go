@@ -780,18 +780,6 @@ func (s *DockerDaemonSuite) TestDaemonDefaultGatewayIPv4Explicit(c *check.C) {
 	deleteInterface(c, defaultNetworkBridge)
 }
 
-func (s *DockerDaemonSuite) TestDaemonDefaultGatewayIPv4ExplicitOutsideContainerSubnet(c *check.C) {
-	defaultNetworkBridge := "docker0"
-	deleteInterface(c, defaultNetworkBridge)
-
-	// Program a custom default gateway outside of the container subnet, daemon should accept it and start
-	err := s.d.StartWithBusybox("--bip", "172.16.0.10/16", "--fixed-cidr", "172.16.1.0/24", "--default-gateway", "172.16.0.254")
-	c.Assert(err, check.IsNil)
-
-	deleteInterface(c, defaultNetworkBridge)
-	s.d.Restart()
-}
-
 func (s *DockerDaemonSuite) TestDaemonIP(c *check.C) {
 	d := s.d
 
@@ -1330,14 +1318,6 @@ func (s *DockerDaemonSuite) TestHttpsInfo(c *check.C) {
 	}
 }
 
-// TestTlsVerify verifies that --tlsverify=false turns on tls
-func (s *DockerDaemonSuite) TestTlsVerify(c *check.C) {
-	out, err := exec.Command(dockerBinary, "daemon", "--tlsverify=false").CombinedOutput()
-	if err == nil || !strings.Contains(string(out), "Could not load X509 key pair") {
-		c.Fatalf("Daemon should not have started due to missing certs: %v\n%s", err, string(out))
-	}
-}
-
 // TestHttpsInfoRogueCert connects via two-way authenticated HTTPS to the info endpoint
 // by using a rogue client certificate and checks that it fails with the expected error.
 func (s *DockerDaemonSuite) TestHttpsInfoRogueCert(c *check.C) {
@@ -1526,27 +1506,4 @@ func teardownV6() error {
 		return err
 	}
 	return nil
-}
-
-func (s *DockerDaemonSuite) TestDaemonRestartWithContainerWithRestartPolicyAlways(c *check.C) {
-	c.Assert(s.d.StartWithBusybox(), check.IsNil)
-
-	out, err := s.d.Cmd("run", "-d", "--restart", "always", "busybox", "top")
-	c.Assert(err, check.IsNil)
-	id := strings.TrimSpace(out)
-
-	_, err = s.d.Cmd("stop", id)
-	c.Assert(err, check.IsNil)
-	_, err = s.d.Cmd("wait", id)
-	c.Assert(err, check.IsNil)
-
-	out, err = s.d.Cmd("ps", "-q")
-	c.Assert(err, check.IsNil)
-	c.Assert(out, check.Equals, "")
-
-	c.Assert(s.d.Restart(), check.IsNil)
-
-	out, err = s.d.Cmd("ps", "-q")
-	c.Assert(err, check.IsNil)
-	c.Assert(strings.TrimSpace(out), check.Equals, id[:12])
 }

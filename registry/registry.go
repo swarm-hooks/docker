@@ -1,4 +1,3 @@
-// Package registry contains client primitives to interact with a remote Docker registry.
 package registry
 
 import (
@@ -18,7 +17,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/registry/api/errcode"
 	"github.com/docker/distribution/registry/api/v2"
-	"github.com/docker/distribution/registry/client"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/pkg/parsers/kernel"
@@ -213,14 +211,8 @@ func ContinueOnError(err error) bool {
 		return ContinueOnError(v.Err)
 	case errcode.Error:
 		return shouldV2Fallback(v)
-	case *client.UnexpectedHTTPResponseError:
-		return true
 	}
-	// let's be nice and fallback if the error is a completely
-	// unexpected one.
-	// If new errors have to be handled in some way, please
-	// add them to the switch above.
-	return true
+	return false
 }
 
 // NewTransport returns a new HTTP transport. If tlsConfig is nil, it uses the

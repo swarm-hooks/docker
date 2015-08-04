@@ -18,8 +18,6 @@ import (
 // the container. Docker has no context of what the default path should be.
 const DefaultPathEnv = ""
 
-// Container holds fields specific to the Windows implementation. See
-// CommonContainer for standard fields common to all containers.
 type Container struct {
 	CommonContainer
 
@@ -27,6 +25,14 @@ type Container struct {
 }
 
 func killProcessDirectly(container *Container) error {
+	return nil
+}
+
+func (container *Container) setupContainerDns() error {
+	return nil
+}
+
+func (container *Container) updateParentsHosts() error {
 	return nil
 }
 
@@ -111,7 +117,7 @@ func populateCommand(c *Container, env []string) error {
 	// TODO Windows: Factor out remainder of unused fields.
 	c.command = &execdriver.Command{
 		ID:             c.ID,
-		Rootfs:         c.rootfsPath(),
+		Rootfs:         c.RootfsPath(),
 		ReadonlyRootfs: c.hostConfig.ReadonlyRootfs,
 		InitPath:       "/.dockerinit",
 		WorkingDir:     c.Config.WorkingDir,
@@ -121,8 +127,8 @@ func populateCommand(c *Container, env []string) error {
 		CapAdd:         c.hostConfig.CapAdd.Slice(),
 		CapDrop:        c.hostConfig.CapDrop.Slice(),
 		ProcessConfig:  processConfig,
-		ProcessLabel:   c.getProcessLabel(),
-		MountLabel:     c.getMountLabel(),
+		ProcessLabel:   c.GetProcessLabel(),
+		MountLabel:     c.GetMountLabel(),
 		FirstStart:     !c.HasBeenStartedBefore,
 		LayerFolder:    layerFolder,
 		LayerPaths:     layerPaths,
@@ -131,18 +137,17 @@ func populateCommand(c *Container, env []string) error {
 	return nil
 }
 
-// GetSize returns real size & virtual size
-func (container *Container) getSize() (int64, int64) {
+// GetSize, return real size, virtual size
+func (container *Container) GetSize() (int64, int64) {
 	// TODO Windows
 	return 0, 0
 }
 
-// allocateNetwork is a no-op on Windows.
-func (container *Container) allocateNetwork() error {
+func (container *Container) AllocateNetwork() error {
 	return nil
 }
 
-func (container *Container) exportRw() (archive.Archive, error) {
+func (container *Container) ExportRw() (archive.Archive, error) {
 	if container.IsRunning() {
 		return nil, fmt.Errorf("Cannot export a running container.")
 	}
@@ -150,18 +155,21 @@ func (container *Container) exportRw() (archive.Archive, error) {
 	return nil, nil
 }
 
-func (container *Container) updateNetwork() error {
+func (container *Container) UpdateNetwork() error {
 	return nil
 }
 
-func (container *Container) releaseNetwork() {
+func (container *Container) ReleaseNetwork() {
 }
 
-func (container *Container) unmountVolumes(forceSyscall bool) error {
+func (container *Container) RestoreNetwork() error {
 	return nil
 }
 
-// PrepareStorage prepares the layer to boot using the windows driver.
+func (container *Container) UnmountVolumes(forceSyscall bool) error {
+	return nil
+}
+
 func (container *Container) PrepareStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		// Get list of paths to parent layers.
@@ -185,7 +193,6 @@ func (container *Container) PrepareStorage() error {
 	return nil
 }
 
-// CleanupStorage unprepares the layer after shutdown? FIXME
 func (container *Container) CleanupStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		return hcsshim.UnprepareLayer(wd.Info(), container.ID)
@@ -193,12 +200,12 @@ func (container *Container) CleanupStorage() error {
 	return nil
 }
 
-// prepareMountPoints is a no-op on Windows
+// TODO Windows. This can be further factored out. Used in daemon.go
 func (container *Container) prepareMountPoints() error {
 	return nil
 }
 
-// removeMountPoints is a no-op on Windows.
+// TODO Windows. This can be further factored out. Used in delete.go
 func (container *Container) removeMountPoints() error {
 	return nil
 }

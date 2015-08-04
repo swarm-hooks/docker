@@ -37,11 +37,8 @@ import (
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
-// DefaultPathEnv is unix style list of directories to search for executables.
 const DefaultPathEnv = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-// Container holds the fields specific to unixen implementations. See
-// CommonContainer for standard fields common to all containers.
 type Container struct {
 	CommonContainer
 
@@ -52,9 +49,9 @@ type Container struct {
 	HostsPath       string
 	MountPoints     map[string]*mountPoint
 	ResolvConfPath  string
-
-	Volumes   map[string]string // Deprecated since 1.7, kept for backwards compatibility
-	VolumesRW map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
+	UpdateDns       bool
+	Volumes         map[string]string // Deprecated since 1.7, kept for backwards compatibility
+	VolumesRW       map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
 }
 
 func killProcessDirectly(container *Container) error {
@@ -78,7 +75,7 @@ func (container *Container) setupLinkedContainers() ([]string, error) {
 		env    []string
 		daemon = container.daemon
 	)
-	children, err := daemon.children(container.Name)
+	children, err := daemon.Children(container.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +233,7 @@ func populateCommand(c *Container, env []string) error {
 	for _, ul := range ulimits {
 		ulIdx[ul.Name] = ul
 	}
-	for name, ul := range c.daemon.configStore.Ulimits {
+	for name, ul := range c.daemon.config.Ulimits {
 		if _, exists := ulIdx[name]; !exists {
 			ulimits = append(ulimits, ul)
 		}
@@ -281,7 +278,7 @@ func populateCommand(c *Container, env []string) error {
 
 	c.command = &execdriver.Command{
 		ID:                 c.ID,
-		Rootfs:             c.rootfsPath(),
+		Rootfs:             c.RootfsPath(),
 		ReadonlyRootfs:     c.hostConfig.ReadonlyRootfs,
 		InitPath:           "/.dockerinit",
 		WorkingDir:         c.Config.WorkingDir,
@@ -296,8 +293,8 @@ func populateCommand(c *Container, env []string) error {
 		CapDrop:            c.hostConfig.CapDrop.Slice(),
 		GroupAdd:           c.hostConfig.GroupAdd,
 		ProcessConfig:      processConfig,
-		ProcessLabel:       c.getProcessLabel(),
-		MountLabel:         c.getMountLabel(),
+		ProcessLabel:       c.GetProcessLabel(),
+		MountLabel:         c.GetMountLabel(),
 		LxcConfig:          lxcConfig,
 		AppArmorProfile:    c.AppArmorProfile,
 		CgroupParent:       c.hostConfig.CgroupParent,
@@ -325,8 +322,8 @@ func mergeDevices(defaultDevices, userDevices []*configs.Device) []*configs.Devi
 	return append(devs, userDevices...)
 }
 
-// GetSize returns the real size & virtual size of the container.
-func (container *Container) getSize() (int64, int64) {
+// GetSize, return real size, virtual size
+func (container *Container) GetSize() (int64, int64) {
 	var (
 		sizeRw, sizeRootfs int64
 		err                error
@@ -377,7 +374,7 @@ func (container *Container) trySetNetworkMount(destination string, path string) 
 }
 
 func (container *Container) buildHostnameFile() error {
-	hostnamePath, err := container.getRootResourcePath("hostname")
+	hostnamePath, err := container.GetRootResourcePath("hostname")
 	if err != nil {
 		return err
 	}
@@ -404,13 +401,13 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 		joinOptions = append(joinOptions, libnetwork.JoinOptionUseDefaultSandbox())
 	}
 
-	container.HostsPath, err = container.getRootResourcePath("hosts")
+	container.HostsPath, err = container.GetRootResourcePath("hosts")
 	if err != nil {
 		return nil, err
 	}
 	joinOptions = append(joinOptions, libnetwork.JoinOptionHostsPath(container.HostsPath))
 
-	container.ResolvConfPath, err = container.getRootResourcePath("resolv.conf")
+	container.ResolvConfPath, err = container.GetRootResourcePath("resolv.conf")
 	if err != nil {
 		return nil, err
 	}
@@ -418,8 +415,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNS) > 0 {
 		dns = container.hostConfig.DNS
-	} else if len(container.daemon.configStore.DNS) > 0 {
-		dns = container.daemon.configStore.DNS
+	} else if len(container.daemon.config.Dns) > 0 {
+		dns = container.daemon.config.Dns
 	}
 
 	for _, d := range dns {
@@ -428,8 +425,8 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	if len(container.hostConfig.DNSSearch) > 0 {
 		dnsSearch = container.hostConfig.DNSSearch
-	} else if len(container.daemon.configStore.DNSSearch) > 0 {
-		dnsSearch = container.daemon.configStore.DNSSearch
+	} else if len(container.daemon.config.DnsSearch) > 0 {
+		dnsSearch = container.daemon.config.DnsSearch
 	}
 
 	for _, ds := range dnsSearch {
@@ -449,7 +446,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	var childEndpoints, parentEndpoints []string
 
-	children, err := container.daemon.children(container.Name)
+	children, err := container.daemon.Children(container.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -474,7 +471,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 		joinOptions = append(joinOptions, libnetwork.JoinOptionExtraHost(parts[0], parts[1]))
 	}
 
-	refs := container.daemon.containerGraph().RefPaths(container.ID)
+	refs := container.daemon.ContainerGraph().RefPaths(container.ID)
 	for _, ref := range refs {
 		if ref.ParentID == "0" {
 			continue
@@ -485,7 +482,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 			logrus.Error(err)
 		}
 
-		if c != nil && !container.daemon.configStore.DisableBridge && container.hostConfig.NetworkMode.IsPrivate() {
+		if c != nil && !container.daemon.config.DisableBridge && container.hostConfig.NetworkMode.IsPrivate() {
 			logrus.Debugf("Update /etc/hosts of %s for alias %s with ip %s", c.ID, ref.Name, container.NetworkSettings.IPAddress)
 			joinOptions = append(joinOptions, libnetwork.JoinOptionParentUpdate(c.NetworkSettings.EndpointID, ref.Name, container.NetworkSettings.IPAddress))
 			if c.NetworkSettings.EndpointID != "" {
@@ -646,7 +643,7 @@ func (container *Container) updateNetworkSettings(n libnetwork.Network, ep libne
 	}
 
 	if container.hostConfig.NetworkMode == runconfig.NetworkMode("bridge") {
-		networkSettings.Bridge = container.daemon.configStore.Bridge.Iface
+		networkSettings.Bridge = container.daemon.config.Bridge.Iface
 	}
 
 	container.NetworkSettings = networkSettings
@@ -655,7 +652,7 @@ func (container *Container) updateNetworkSettings(n libnetwork.Network, ep libne
 
 // UpdateNetwork is used to update the container's network (e.g. when linked containers
 // get removed/unlinked).
-func (container *Container) updateNetwork() error {
+func (container *Container) UpdateNetwork() error {
 	n, err := container.daemon.netController.NetworkByID(container.NetworkSettings.NetworkID)
 	if err != nil {
 		return fmt.Errorf("error locating network id %s: %v", container.NetworkSettings.NetworkID, err)
@@ -802,7 +799,7 @@ func (container *Container) secondaryNetworkRequired(primaryNetworkType string) 
 		return false
 	}
 
-	if container.daemon.configStore.DisableBridge {
+	if container.daemon.config.DisableBridge {
 		return false
 	}
 
@@ -815,7 +812,7 @@ func (container *Container) secondaryNetworkRequired(primaryNetworkType string) 
 	return false
 }
 
-func (container *Container) allocateNetwork() error {
+func (container *Container) AllocateNetwork() error {
 	mode := container.hostConfig.NetworkMode
 	controller := container.daemon.netController
 	if container.Config.NetworkDisabled || mode.IsContainer() {
@@ -836,7 +833,7 @@ func (container *Container) allocateNetwork() error {
 		return fmt.Errorf("conflicting options: publishing a service and network mode")
 	}
 
-	if runconfig.NetworkMode(networkDriver).IsBridge() && container.daemon.configStore.DisableBridge {
+	if runconfig.NetworkMode(networkDriver).IsBridge() && container.daemon.config.DisableBridge {
 		container.Config.NetworkDisabled = true
 		return nil
 	}
@@ -860,7 +857,7 @@ func (container *Container) allocateNetwork() error {
 		return err
 	}
 
-	return container.writeHostConfig()
+	return container.WriteHostConfig()
 }
 
 func (container *Container) configureNetwork(networkName, service, networkDriver string, canCreateNetwork bool) error {
@@ -949,14 +946,14 @@ func (container *Container) initializeNetworking() error {
 
 	}
 
-	if err := container.allocateNetwork(); err != nil {
+	if err := container.AllocateNetwork(); err != nil {
 		return err
 	}
 
 	return container.buildHostnameFile()
 }
 
-func (container *Container) exportRw() (archive.Archive, error) {
+func (container *Container) ExportRw() (archive.Archive, error) {
 	if container.daemon == nil {
 		return nil, fmt.Errorf("Can't load storage driver for unregistered container %s", container.ID)
 	}
@@ -1032,7 +1029,7 @@ func (container *Container) getNetworkedContainer() (*Container, error) {
 	}
 }
 
-func (container *Container) releaseNetwork() {
+func (container *Container) ReleaseNetwork() {
 	if container.hostConfig.NetworkMode.IsContainer() || container.Config.NetworkDisabled {
 		return
 	}
@@ -1079,7 +1076,7 @@ func (container *Container) releaseNetwork() {
 	}
 }
 
-func (container *Container) unmountVolumes(forceSyscall bool) error {
+func (container *Container) UnmountVolumes(forceSyscall bool) error {
 	var volumeMounts []mountPoint
 
 	for _, mntPoint := range container.MountPoints {
@@ -1115,24 +1112,18 @@ func (container *Container) unmountVolumes(forceSyscall bool) error {
 	return nil
 }
 
-// PrepareStorage does nothing on unixen.
 func (container *Container) PrepareStorage() error {
 	return nil
 }
 
-// CleanupStorage does nothing on unixen.
 func (container *Container) CleanupStorage() error {
 	return nil
 }
 
 func (container *Container) networkMounts() []execdriver.Mount {
 	var mounts []execdriver.Mount
-	mode := "Z"
-	if container.hostConfig.NetworkMode.IsContainer() {
-		mode = "z"
-	}
 	if container.ResolvConfPath != "" {
-		label.Relabel(container.ResolvConfPath, container.MountLabel, mode)
+		label.SetFileLabel(container.ResolvConfPath, container.MountLabel)
 		mounts = append(mounts, execdriver.Mount{
 			Source:      container.ResolvConfPath,
 			Destination: "/etc/resolv.conf",
@@ -1141,7 +1132,7 @@ func (container *Container) networkMounts() []execdriver.Mount {
 		})
 	}
 	if container.HostnamePath != "" {
-		label.Relabel(container.HostnamePath, container.MountLabel, mode)
+		label.SetFileLabel(container.HostnamePath, container.MountLabel)
 		mounts = append(mounts, execdriver.Mount{
 			Source:      container.HostnamePath,
 			Destination: "/etc/hostname",
@@ -1150,7 +1141,7 @@ func (container *Container) networkMounts() []execdriver.Mount {
 		})
 	}
 	if container.HostsPath != "" {
-		label.Relabel(container.HostsPath, container.MountLabel, mode)
+		label.SetFileLabel(container.HostsPath, container.MountLabel)
 		mounts = append(mounts, execdriver.Mount{
 			Source:      container.HostsPath,
 			Destination: "/etc/hosts",

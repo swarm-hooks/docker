@@ -64,7 +64,8 @@ a container. To exit the container type `exit`.
 If you want your containers to be able to access the external network you must
 enable the `net.ipv4.ip_forward` rule.
 This can be done using YaST by browsing to the
-`System -> Network Settings -> Routing` menu (for openSUSE Tumbleweed and later) or `Network Devices -> Network Settings -> Routing` menu (for SUSE Linux Enterprise 12 and previous openSUSE versions) and ensuring that the `Enable IPv4 Forwarding` box is checked.
+`Network Devices -> Network Settings -> Routing` menu and ensuring that the
+`Enable IPv4 Forwarding` box is checked.
 
 This option cannot be changed when networking is handled by the Network Manager.
 In such cases the `/etc/sysconfig/SuSEfirewall2` file needs to be edited by

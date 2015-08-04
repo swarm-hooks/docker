@@ -7,12 +7,9 @@ set -e
 dir="$DEST/httpserver"
 mkdir -p "$dir"
 (
-    cd "$dir"
-    echo "${dir}"
-    GOOS=linux GOARCH=amd64 go build -a -n -v -x -o httpserver github.com/docker/docker/contrib/httpserver
-    echo "done gobuild"
+	cd "$dir"
+	GOOS=linux GOARCH=amd64 go build -o httpserver github.com/docker/docker/contrib/httpserver
 	cp ../../../../contrib/httpserver/Dockerfile .
-	docker build -t httpserver . 
-	echo "done docker build"
+	docker build -qt httpserver . > /dev/null
 )
 rm -rf "$dir"

@@ -10,8 +10,6 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
-// lookupRaw looks up an image by name in a TagStore and returns the raw JSON
-// describing the image.
 func (s *TagStore) lookupRaw(name string) ([]byte, error) {
 	image, err := s.LookupImage(name)
 	if err != nil || image == nil {
@@ -26,8 +24,7 @@ func (s *TagStore) lookupRaw(name string) ([]byte, error) {
 	return imageInspectRaw, nil
 }
 
-// Lookup looks up an image by name in a TagStore and returns it as an
-// ImageInspect structure.
+// Lookup return an image encoded in JSON
 func (s *TagStore) Lookup(name string) (*types.ImageInspect, error) {
 	image, err := s.LookupImage(name)
 	if err != nil || image == nil {
@@ -47,7 +44,7 @@ func (s *TagStore) Lookup(name string) (*types.ImageInspect, error) {
 		Architecture:    image.Architecture,
 		Os:              image.OS,
 		Size:            image.Size,
-		VirtualSize:     s.graph.GetParentsSize(image) + image.Size,
+		VirtualSize:     s.graph.GetParentsSize(image, 0) + image.Size,
 	}
 
 	imageInspect.GraphDriver.Name = s.graph.driver.String()

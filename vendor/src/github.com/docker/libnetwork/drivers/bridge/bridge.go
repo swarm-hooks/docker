@@ -596,18 +596,21 @@ func (d *driver) CreateNetwork(id types.UUID, option map[string]interface{}) err
 	// networks. This step is needed now because driver might have now set the bridge
 	// name on this config struct. And because we need to check for possible address
 	// conflicts, so we need to check against operationa lnetworks.
-	if err = config.conflictsWithNetworks(id, networkList); err != nil {
+	if err := config.conflictsWithNetworks(id, networkList); err != nil {
 		return err
 	}
 
 	setupNetworkIsolationRules := func(config *networkConfiguration, i *bridgeInterface) error {
-		if err := network.isolateNetwork(networkList, true); err != nil {
-			if err := network.isolateNetwork(networkList, false); err != nil {
-				logrus.Warnf("Failed on removing the inter-network iptables rules on cleanup: %v", err)
+		defer func() {
+			if err != nil {
+				if err := network.isolateNetwork(networkList, false); err != nil {
+					logrus.Warnf("Failed on removing the inter-network iptables rules on cleanup: %v", err)
+				}
 			}
-			return err
-		}
-		return nil
+		}()
+
+		err := network.isolateNetwork(networkList, true)
+		return err
 	}
 
 	// Prepare the bridge setup configuration
@@ -763,26 +766,17 @@ func (d *driver) DeleteNetwork(nid types.UUID) error {
 }
 
 func addToBridge(ifaceName, bridgeName string) error {
-	link, err := netlink.LinkByName(ifaceName)
+	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		return fmt.Errorf("could not find interface %s: %v", ifaceName, err)
 	}
-	if err = netlink.LinkSetMaster(link,
-		&netlink.Bridge{LinkAttrs: netlink.LinkAttrs{Name: bridgeName}}); err != nil {
-		logrus.Debugf("Failed to add %s to bridge via netlink.Trying ioctl: %v", ifaceName, err)
-		iface, err := net.InterfaceByName(ifaceName)
-		if err != nil {
-			return fmt.Errorf("could not find network interface %s: %v", ifaceName, err)
-		}
 
-		master, err := net.InterfaceByName(bridgeName)
-		if err != nil {
-			return fmt.Errorf("could not find bridge %s: %v", bridgeName, err)
-		}
-
-		return ioctlAddToBridge(iface, master)
+	master, err := net.InterfaceByName(bridgeName)
+	if err != nil {
+		return fmt.Errorf("could not find bridge %s: %v", bridgeName, err)
 	}
-	return nil
+
+	return ioctlAddToBridge(iface, master)
 }
 
 func setHairpinMode(link netlink.Link, enable bool) error {
@@ -953,14 +947,15 @@ func (d *driver) CreateEndpoint(nid, eid types.UUID, epInfo driverapi.EndpointIn
 	}
 
 	// v4 address for the sandbox side pipe interface
-	ip4, err := ipAllocator.RequestIP(n.bridge.bridgeIPv4, nil)
+	sub := types.GetIPNetCanonical(n.bridge.bridgeIPv4)
+	ip4, err := ipAllocator.RequestIP(sub, nil)
 	if err != nil {
 		return err
 	}
 	ipv4Addr := &net.IPNet{IP: ip4, Mask: n.bridge.bridgeIPv4.Mask}
 
 	// Down the interface before configuring mac address.
-	if err = netlink.LinkSetDown(sbox); err != nil {
+	if err := netlink.LinkSetDown(sbox); err != nil {
 		return fmt.Errorf("could not set link down for container interface %s: %v", containerIfName, err)
 	}
 
@@ -973,7 +968,7 @@ func (d *driver) CreateEndpoint(nid, eid types.UUID, epInfo driverapi.EndpointIn
 	endpoint.macAddress = mac
 
 	// Up the host interface after finishing all netlink configuration
-	if err = netlink.LinkSetUp(host); err != nil {
+	if err := netlink.LinkSetUp(host); err != nil {
 		return fmt.Errorf("could not set link up for host interface %s: %v", hostIfName, err)
 	}
 
@@ -1079,7 +1074,8 @@ func (d *driver) DeleteEndpoint(nid, eid types.UUID) error {
 	n.releasePorts(ep)
 
 	// Release the v4 address allocated to this endpoint's sandbox interface
-	err = ipAllocator.ReleaseIP(n.bridge.bridgeIPv4, ep.addr.IP)
+	sub := types.GetIPNetCanonical(n.bridge.bridgeIPv4)
+	err = ipAllocator.ReleaseIP(sub, ep.addr.IP)
 	if err != nil {
 		return err
 	}

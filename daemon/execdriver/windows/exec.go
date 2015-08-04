@@ -13,14 +13,13 @@ import (
 	"github.com/natefinch/npipe"
 )
 
-// Exec implements the exec driver Driver interface.
-func (d *Driver) Exec(c *execdriver.Command, processConfig *execdriver.ProcessConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
+func (d *driver) Exec(c *execdriver.Command, processConfig *execdriver.ProcessConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
 
 	var (
 		inListen, outListen, errListen     *npipe.PipeListener
 		term                               execdriver.Terminal
 		err                                error
-		randomID                           = stringid.GenerateNonCryptoID()
+		randomID                           string = stringid.GenerateNonCryptoID()
 		serverPipeFormat, clientPipeFormat string
 		pid                                uint32
 		exitCode                           int32

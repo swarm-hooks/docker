@@ -37,13 +37,11 @@ type (
 		Compression      Compression
 		NoLchown         bool
 		ChownOpts        *TarChownOptions
+		Name             string
 		IncludeSourceDir bool
 		// When unpacking, specifies whether overwriting a directory with a
 		// non-directory is allowed and vice versa.
 		NoOverwriteDirNonDir bool
-		// For each include when creating an archive, the included name will be
-		// replaced with the matching name from this map.
-		RebaseNames map[string]string
 	}
 
 	// Archiver allows the reuse of most utility functions of this package
@@ -456,9 +454,8 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 
 		seen := make(map[string]bool)
 
+		var renamedRelFilePath string // For when tar.Options.Name is set
 		for _, include := range options.IncludeFiles {
-			rebaseName := options.RebaseNames[include]
-
 			// We can't use filepath.Join(srcPath, include) because this will
 			// clean away a trailing "." or "/" which may be important.
 			walkRoot := strings.Join([]string{srcPath, include}, string(filepath.Separator))
@@ -506,17 +503,14 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 				}
 				seen[relFilePath] = true
 
-				// Rename the base resource.
-				if rebaseName != "" {
-					var replacement string
-					if rebaseName != string(filepath.Separator) {
-						// Special case the root directory to replace with an
-						// empty string instead so that we don't end up with
-						// double slashes in the paths.
-						replacement = rebaseName
-					}
-
-					relFilePath = strings.Replace(relFilePath, include, replacement, 1)
+				// TODO Windows: Verify if this needs to be os.Pathseparator
+				// Rename the base resource
+				if options.Name != "" && filePath == srcPath+"/"+filepath.Base(relFilePath) {
+					renamedRelFilePath = relFilePath
+				}
+				// Set this to make sure the items underneath also get renamed
+				if options.Name != "" {
+					relFilePath = strings.Replace(relFilePath, renamedRelFilePath, options.Name, 1)
 				}
 
 				if err := ta.addTarFile(filePath, relFilePath); err != nil {
@@ -720,7 +714,7 @@ func (archiver *Archiver) CopyWithTar(src, dst string) error {
 	}
 	// Create dst, copy src's content into it
 	logrus.Debugf("Creating dest directory: %s", dst)
-	if err := system.MkdirAll(dst, 0755); err != nil {
+	if err := system.MkdirAll(dst, 0755); err != nil && !os.IsExist(err) {
 		return err
 	}
 	logrus.Debugf("Calling TarUntar(%s, %s)", src, dst)
@@ -752,7 +746,7 @@ func (archiver *Archiver) CopyFileWithTar(src, dst string) (err error) {
 		dst = filepath.Join(dst, filepath.Base(src))
 	}
 	// Create the holding directory if necessary
-	if err := system.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+	if err := system.MkdirAll(filepath.Dir(dst), 0700); err != nil && !os.IsExist(err) {
 		return err
 	}
 

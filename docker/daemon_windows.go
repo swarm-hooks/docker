@@ -3,8 +3,6 @@
 package main
 
 import (
-	"os"
-
 	apiserver "github.com/docker/docker/api/server"
 	"github.com/docker/docker/daemon"
 )
@@ -22,8 +20,4 @@ func currentUserIsOwner(f string) bool {
 // setDefaultUmask doesn't do anything on windows
 func setDefaultUmask() error {
 	return nil
-}
-
-func getDaemonConfDir() string {
-	return os.Getenv("PROGRAMDATA") + `\docker\config`
 }

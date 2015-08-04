@@ -89,7 +89,7 @@ func (s *statsCollector) run() {
 	var pairs []publishersPair
 
 	for range time.Tick(s.interval) {
-		systemUsage, err := s.getSystemCPUUsage()
+		systemUsage, err := s.getSystemCpuUsage()
 		if err != nil {
 			logrus.Errorf("collecting system cpu usage: %v", err)
 			continue
@@ -107,7 +107,7 @@ func (s *statsCollector) run() {
 		s.m.Unlock()
 
 		for _, pair := range pairs {
-			stats, err := pair.container.stats()
+			stats, err := pair.container.Stats()
 			if err != nil {
 				if err != execdriver.ErrNotRunning {
 					logrus.Errorf("collecting stats for %s: %v", pair.container.ID, err)
@@ -122,9 +122,9 @@ func (s *statsCollector) run() {
 
 const nanoSeconds = 1e9
 
-// getSystemCPUUSage returns the host system's cpu usage in nanoseconds
+// getSystemCpuUSage returns the host system's cpu usage in nanoseconds
 // for the system to match the cgroup readings are returned in the same format.
-func (s *statsCollector) getSystemCPUUsage() (uint64, error) {
+func (s *statsCollector) getSystemCpuUsage() (uint64, error) {
 	var line string
 	f, err := os.Open("/proc/stat")
 	if err != nil {

@@ -5,15 +5,13 @@ import (
 	"io"
 )
 
-// ContainerExport writes the contents of the container to the given
-// writer. An error is returned if the container cannot be found.
 func (daemon *Daemon) ContainerExport(name string, out io.Writer) error {
 	container, err := daemon.Get(name)
 	if err != nil {
 		return err
 	}
 
-	data, err := container.export()
+	data, err := container.Export()
 	if err != nil {
 		return fmt.Errorf("%s: %s", name, err)
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/daemon/graphdriver"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/fileutils"
+	"github.com/docker/docker/pkg/nat"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/parsers/kernel"
 	"github.com/docker/docker/pkg/system"
@@ -31,15 +32,11 @@ import (
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
-// Changes returns the list of changes between the container and it's
-// parent.
 func (daemon *Daemon) Changes(container *Container) ([]archive.Change, error) {
 	initID := fmt.Sprintf("%s-init", container.ID)
 	return daemon.driver.Changes(container.ID, initID)
 }
 
-// Diff returns the changes between the container and it's parent as
-// an archive.
 func (daemon *Daemon) Diff(container *Container) (archive.Archive, error) {
 	initID := fmt.Sprintf("%s-init", container.ID)
 	return daemon.driver.Diff(container.ID, initID)
@@ -120,8 +117,6 @@ func checkKernel() error {
 	return nil
 }
 
-// adaptContainerSettings is called during container creation to modify any
-// settings necessary in the HostConfig structure.
 func (daemon *Daemon) adaptContainerSettings(hostConfig *runconfig.HostConfig) {
 	if hostConfig == nil {
 		return
@@ -132,23 +127,46 @@ func (daemon *Daemon) adaptContainerSettings(hostConfig *runconfig.HostConfig) {
 	}
 }
 
-// verifyPlatformContainerSettings performs platform-specific validation of the
-// hostconfig and config structures.
-func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *runconfig.HostConfig, config *runconfig.Config) ([]string, error) {
+func (daemon *Daemon) verifyContainerSettings(hostConfig *runconfig.HostConfig, config *runconfig.Config) ([]string, error) {
 	var warnings []string
 
+	if config != nil {
+		// The check for a valid workdir path is made on the server rather than in the
+		// client. This is because we don't know the type of path (Linux or Windows)
+		// to validate on the client.
+		if config.WorkingDir != "" && !filepath.IsAbs(config.WorkingDir) {
+			return warnings, fmt.Errorf("The working directory '%s' is invalid. It needs to be an absolute path.", config.WorkingDir)
+		}
+	}
+
+	if hostConfig == nil {
+		return warnings, nil
+	}
+
+	for port := range hostConfig.PortBindings {
+		_, portStr := nat.SplitProtoPort(string(port))
+		if _, err := nat.ParsePort(portStr); err != nil {
+			return warnings, fmt.Errorf("Invalid port specification: %q", portStr)
+		}
+		for _, pb := range hostConfig.PortBindings[port] {
+			_, err := nat.NewPort(nat.SplitProtoPort(pb.HostPort))
+			if err != nil {
+				return warnings, fmt.Errorf("Invalid port specification: %q", pb.HostPort)
+			}
+		}
+	}
 	if hostConfig.LxcConf.Len() > 0 && !strings.Contains(daemon.ExecutionDriver().Name(), "lxc") {
 		return warnings, fmt.Errorf("Cannot use --lxc-conf with execdriver: %s", daemon.ExecutionDriver().Name())
 	}
 	if hostConfig.Memory != 0 && hostConfig.Memory < 4194304 {
 		return warnings, fmt.Errorf("Minimum memory limit allowed is 4MB")
 	}
-	if hostConfig.Memory > 0 && !daemon.systemConfig().MemoryLimit {
+	if hostConfig.Memory > 0 && !daemon.SystemConfig().MemoryLimit {
 		warnings = append(warnings, "Your kernel does not support memory limit capabilities. Limitation discarded.")
 		logrus.Warnf("Your kernel does not support memory limit capabilities. Limitation discarded.")
 		hostConfig.Memory = 0
 	}
-	if hostConfig.Memory > 0 && hostConfig.MemorySwap != -1 && !daemon.systemConfig().SwapLimit {
+	if hostConfig.Memory > 0 && hostConfig.MemorySwap != -1 && !daemon.SystemConfig().SwapLimit {
 		warnings = append(warnings, "Your kernel does not support swap limit capabilities, memory limited without swap.")
 		logrus.Warnf("Your kernel does not support swap limit capabilities, memory limited without swap.")
 		hostConfig.MemorySwap = -1
@@ -159,7 +177,7 @@ func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *runconfig.HostC
 	if hostConfig.Memory == 0 && hostConfig.MemorySwap > 0 {
 		return warnings, fmt.Errorf("You should always set the Memory limit when using Memoryswap limit, see usage.")
 	}
-	if hostConfig.MemorySwappiness != nil && !daemon.systemConfig().MemorySwappiness {
+	if hostConfig.MemorySwappiness != nil && !daemon.SystemConfig().MemorySwappiness {
 		warnings = append(warnings, "Your kernel does not support memory swappiness capabilities, memory swappiness discarded.")
 		logrus.Warnf("Your kernel does not support memory swappiness capabilities, memory swappiness discarded.")
 		hostConfig.MemorySwappiness = nil
@@ -170,12 +188,12 @@ func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *runconfig.HostC
 			return warnings, fmt.Errorf("Invalid value: %v, valid memory swappiness range is 0-100.", swappiness)
 		}
 	}
-	if hostConfig.CPUPeriod > 0 && !daemon.systemConfig().CpuCfsPeriod {
+	if hostConfig.CPUPeriod > 0 && !daemon.SystemConfig().CpuCfsPeriod {
 		warnings = append(warnings, "Your kernel does not support CPU cfs period. Period discarded.")
 		logrus.Warnf("Your kernel does not support CPU cfs period. Period discarded.")
 		hostConfig.CPUPeriod = 0
 	}
-	if hostConfig.CPUQuota > 0 && !daemon.systemConfig().CpuCfsQuota {
+	if hostConfig.CPUQuota > 0 && !daemon.SystemConfig().CpuCfsQuota {
 		warnings = append(warnings, "Your kernel does not support CPU cfs quota. Quota discarded.")
 		logrus.Warnf("Your kernel does not support CPU cfs quota. Quota discarded.")
 		hostConfig.CPUQuota = 0
@@ -183,11 +201,11 @@ func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *runconfig.HostC
 	if hostConfig.BlkioWeight > 0 && (hostConfig.BlkioWeight < 10 || hostConfig.BlkioWeight > 1000) {
 		return warnings, fmt.Errorf("Range of blkio weight is from 10 to 1000.")
 	}
-	if hostConfig.OomKillDisable && !daemon.systemConfig().OomKillDisable {
+	if hostConfig.OomKillDisable && !daemon.SystemConfig().OomKillDisable {
 		hostConfig.OomKillDisable = false
 		return warnings, fmt.Errorf("Your kernel does not support oom kill disable.")
 	}
-	if daemon.systemConfig().IPv4ForwardingDisabled {
+	if daemon.SystemConfig().IPv4ForwardingDisabled {
 		warnings = append(warnings, "IPv4 forwarding is disabled. Networking will not work.")
 		logrus.Warnf("IPv4 forwarding is disabled. Networking will not work")
 	}
@@ -481,13 +499,11 @@ func setupInitLayer(initLayer string) error {
 	return nil
 }
 
-// NetworkAPIRouter perhaps we inline this into server-experimental
-func (daemon *Daemon) NetworkAPIRouter() func(w http.ResponseWriter, req *http.Request) {
+func (daemon *Daemon) NetworkApiRouter() func(w http.ResponseWriter, req *http.Request) {
 	return nwapi.NewHTTPHandler(daemon.netController)
 }
 
-// RegisterLinks writes the links to a file.
-func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.HostConfig) error {
+func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.HostConfig) error {
 	if hostConfig == nil || hostConfig.Links == nil {
 		return nil
 	}
@@ -512,7 +528,7 @@ func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.
 		if child.hostConfig.NetworkMode.IsHost() {
 			return runconfig.ErrConflictHostNetworkAndLinks
 		}
-		if err := daemon.registerLink(container, child, alias); err != nil {
+		if err := daemon.RegisterLink(container, child, alias); err != nil {
 			return err
 		}
 	}
@@ -520,7 +536,7 @@ func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.
 	// After we load all the links into the daemon
 	// set them to nil on the hostconfig
 	hostConfig.Links = nil
-	if err := container.writeHostConfig(); err != nil {
+	if err := container.WriteHostConfig(); err != nil {
 		return err
 	}
 

@@ -547,7 +547,7 @@ func rewriteDockerfileFrom(dockerfileName string, translator func(string, regist
 			// Replace the line with a resolved "FROM repo@digest"
 			repo, tag := parsers.ParseRepositoryTag(matches[1])
 			if tag == "" {
-				tag = tags.DefaultTag
+				tag = tags.DEFAULTTAG
 			}
 
 			repoInfo, err := registry.ParseRepositoryInfo(repo)

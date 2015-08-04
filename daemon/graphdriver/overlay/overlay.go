@@ -124,7 +124,7 @@ func Init(home string, options []string) (graphdriver.Driver, error) {
 	}
 
 	// Create the driver home dir
-	if err := os.MkdirAll(home, 0755); err != nil {
+	if err := os.MkdirAll(home, 0755); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 

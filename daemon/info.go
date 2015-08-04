@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/utils"
 )
 
-// SystemInfo returns information about the host server the daemon is running on.
 func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 	images := daemon.Graph().Map()
 	var imgcount int
@@ -50,14 +49,11 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 		logrus.Errorf("Could not read system memory info: %v", err)
 	}
 
-	// if we still have the original dockerinit binary from before
-	// we copied it locally, let's return the path to that, since
-	// that's more intuitive (the copied path is trivial to derive
-	// by hand given VERSION)
+	// if we still have the original dockerinit binary from before we copied it locally, let's return the path to that, since that's more intuitive (the copied path is trivial to derive by hand given VERSION)
 	initPath := utils.DockerInitPath("")
 	if initPath == "" {
 		// if that fails, we'll just return the path from the daemon
-		initPath = daemon.systemInitPath()
+		initPath = daemon.SystemInitPath()
 	}
 
 	v := &types.Info{
@@ -66,9 +62,9 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 		Images:             imgcount,
 		Driver:             daemon.GraphDriver().String(),
 		DriverStatus:       daemon.GraphDriver().Status(),
-		IPv4Forwarding:     !daemon.systemConfig().IPv4ForwardingDisabled,
-		BridgeNfIptables:   !daemon.systemConfig().BridgeNfCallIptablesDisabled,
-		BridgeNfIp6tables:  !daemon.systemConfig().BridgeNfCallIp6tablesDisabled,
+		IPv4Forwarding:     !daemon.SystemConfig().IPv4ForwardingDisabled,
+		BridgeNfIptables:   !daemon.SystemConfig().BridgeNfCallIptablesDisabled,
+		BridgeNfIp6tables:  !daemon.SystemConfig().BridgeNfCallIp6tablesDisabled,
 		Debug:              os.Getenv("DEBUG") != "",
 		NFd:                fileutils.GetTotalUsedFds(),
 		NGoroutines:        runtime.NumGoroutine(),
@@ -84,8 +80,8 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 		InitPath:           initPath,
 		NCPU:               runtime.NumCPU(),
 		MemTotal:           meminfo.MemTotal,
-		DockerRootDir:      daemon.config().Root,
-		Labels:             daemon.config().Labels,
+		DockerRootDir:      daemon.Config().Root,
+		Labels:             daemon.Config().Labels,
 		ExperimentalBuild:  utils.ExperimentalBuild(),
 	}
 
@@ -94,11 +90,11 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 	// sysinfo.cgroupCpuInfo will be nil otherwise and cause a SIGSEGV if
 	// an attempt is made to access through them.
 	if runtime.GOOS != "windows" {
-		v.MemoryLimit = daemon.systemConfig().MemoryLimit
-		v.SwapLimit = daemon.systemConfig().SwapLimit
-		v.OomKillDisable = daemon.systemConfig().OomKillDisable
-		v.CpuCfsPeriod = daemon.systemConfig().CpuCfsPeriod
-		v.CpuCfsQuota = daemon.systemConfig().CpuCfsQuota
+		v.MemoryLimit = daemon.SystemConfig().MemoryLimit
+		v.SwapLimit = daemon.SystemConfig().SwapLimit
+		v.OomKillDisable = daemon.SystemConfig().OomKillDisable
+		v.CpuCfsPeriod = daemon.SystemConfig().CpuCfsPeriod
+		v.CpuCfsQuota = daemon.SystemConfig().CpuCfsQuota
 	}
 
 	if httpProxy := os.Getenv("http_proxy"); httpProxy != "" {

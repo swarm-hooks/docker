@@ -7,27 +7,16 @@ import (
 	"github.com/endophage/gotuf/errors"
 )
 
-// Canonical base role names
-const (
-	CanonicalRootRole      = "root"
-	CanonicalTargetsRole   = "targets"
-	CanonicalSnapshotRole  = "snapshot"
-	CanonicalTimestampRole = "timestamp"
-)
-
 var ValidRoles = map[string]string{
-	CanonicalRootRole:      CanonicalRootRole,
-	CanonicalTargetsRole:   CanonicalTargetsRole,
-	CanonicalSnapshotRole:  CanonicalSnapshotRole,
-	CanonicalTimestampRole: CanonicalTimestampRole,
+	"root":      "root",
+	"targets":   "targets",
+	"snapshot":  "snapshot",
+	"timestamp": "timestamp",
 }
 
 func SetValidRoles(rs map[string]string) {
-	// iterate ValidRoles
-	for k, _ := range ValidRoles {
-		if v, ok := rs[k]; ok {
-			ValidRoles[k] = v
-		}
+	for k, v := range rs {
+		ValidRoles[strings.ToLower(k)] = strings.ToLower(v)
 	}
 }
 
@@ -38,27 +27,6 @@ func RoleName(role string) string {
 	return role
 }
 
-func CanonicalRole(role string) string {
-	name := strings.ToLower(role)
-	if _, ok := ValidRoles[name]; ok {
-		// The canonical version is always lower case
-		// se ensure we return name, not role
-		return name
-	}
-	targetsBase := fmt.Sprintf("%s/", ValidRoles[CanonicalTargetsRole])
-	if strings.HasPrefix(name, targetsBase) {
-		role = strings.TrimPrefix(role, targetsBase)
-		role = fmt.Sprintf("%s/%s", CanonicalTargetsRole, role)
-		return role
-	}
-	for r, v := range ValidRoles {
-		if role == v {
-			return r
-		}
-	}
-	return ""
-}
-
 // ValidRole only determines the name is semantically
 // correct. For target delegated roles, it does NOT check
 // the the appropriate parent roles exist.
@@ -67,7 +35,7 @@ func ValidRole(name string) bool {
 	if v, ok := ValidRoles[name]; ok {
 		return name == v
 	}
-	targetsBase := fmt.Sprintf("%s/", ValidRoles[CanonicalTargetsRole])
+	targetsBase := fmt.Sprintf("%s/", ValidRoles["targets"])
 	if strings.HasPrefix(name, targetsBase) {
 		return true
 	}
@@ -144,6 +112,6 @@ func (r Role) CheckPrefixes(hash string) bool {
 }
 
 func (r Role) IsDelegation() bool {
-	targetsBase := fmt.Sprintf("%s/", ValidRoles[CanonicalTargetsRole])
+	targetsBase := fmt.Sprintf("%s/", ValidRoles["targets"])
 	return strings.HasPrefix(r.Name, targetsBase)
 }

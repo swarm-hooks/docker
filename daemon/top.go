@@ -1,5 +1,3 @@
-//+build !windows
-
 package daemon
 
 import (
@@ -76,6 +74,6 @@ func (daemon *Daemon) ContainerTop(name string, psArgs string) (*types.Container
 			}
 		}
 	}
-	container.logEvent("top")
+	container.LogEvent("top")
 	return procList, nil
 }

@@ -22,13 +22,10 @@ func (history *History) Swap(i, j int) {
 	containers[i], containers[j] = containers[j], containers[i]
 }
 
-// Add the given container to history.
 func (history *History) Add(container *Container) {
 	*history = append(*history, container)
 }
 
-// History implements the sort interface, can we inline calls to sort
-// rather than have this function?
-func (history *History) sort() {
+func (history *History) Sort() {
 	sort.Sort(history)
 }

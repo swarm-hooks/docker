@@ -8,7 +8,6 @@ import (
 	"github.com/docker/docker/daemon/execdriver"
 )
 
-// Stats implements the exec driver Driver interface.
-func (d *Driver) Stats(id string) (*execdriver.ResourceStats, error) {
+func (d *driver) Stats(id string) (*execdriver.ResourceStats, error) {
 	return nil, fmt.Errorf("Windows: Stats not implemented")
 }

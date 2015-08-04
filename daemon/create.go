@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/graph/tags"
+	"github.com/docker/docker/graph"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/runconfig"
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
-// ContainerCreate takes configs and creates a container.
 func (daemon *Daemon) ContainerCreate(name string, config *runconfig.Config, hostConfig *runconfig.HostConfig) (string, []string, error) {
 	if config == nil {
 		return "", nil, fmt.Errorf("Config cannot be empty in order to create a container")
@@ -28,7 +27,7 @@ func (daemon *Daemon) ContainerCreate(name string, config *runconfig.Config, hos
 		if daemon.Graph().IsNotExist(err, config.Image) {
 			_, tag := parsers.ParseRepositoryTag(config.Image)
 			if tag == "" {
-				tag = tags.DefaultTag
+				tag = graph.DefaultTag
 			}
 			return "", warnings, fmt.Errorf("No such image: %s (tag: %s)", config.Image, tag)
 		}
@@ -64,14 +63,14 @@ func (daemon *Daemon) Create(config *runconfig.Config, hostConfig *runconfig.Hos
 	if err := daemon.mergeAndVerifyConfig(config, img); err != nil {
 		return nil, nil, err
 	}
-	if !config.NetworkDisabled && daemon.systemConfig().IPv4ForwardingDisabled {
+	if !config.NetworkDisabled && daemon.SystemConfig().IPv4ForwardingDisabled {
 		warnings = append(warnings, "IPv4 forwarding is disabled.")
 	}
 	if hostConfig == nil {
 		hostConfig = &runconfig.HostConfig{}
 	}
 	if hostConfig.SecurityOpt == nil {
-		hostConfig.SecurityOpt, err = daemon.generateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode)
+		hostConfig.SecurityOpt, err = daemon.GenerateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -97,15 +96,15 @@ func (daemon *Daemon) Create(config *runconfig.Config, hostConfig *runconfig.Hos
 		return nil, nil, err
 	}
 
-	if err := container.toDisk(); err != nil {
+	if err := container.ToDisk(); err != nil {
 		logrus.Errorf("Error saving new container to disk: %v", err)
 		return nil, nil, err
 	}
-	container.logEvent("create")
+	container.LogEvent("create")
 	return container, warnings, nil
 }
 
-func (daemon *Daemon) generateSecurityOpt(ipcMode runconfig.IpcMode, pidMode runconfig.PidMode) ([]string, error) {
+func (daemon *Daemon) GenerateSecurityOpt(ipcMode runconfig.IpcMode, pidMode runconfig.PidMode) ([]string, error) {
 	if ipcMode.IsHost() || pidMode.IsHost() {
 		return label.DisableSecOpt(), nil
 	}

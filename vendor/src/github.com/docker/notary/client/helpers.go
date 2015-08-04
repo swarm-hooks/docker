@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/notary/client/changelist"
 	"github.com/endophage/gotuf"
 	"github.com/endophage/gotuf/data"
@@ -27,16 +26,13 @@ func getRemoteStore(baseURL, gun string, rt http.RoundTripper) (store.RemoteStor
 
 func applyChangelist(repo *tuf.TufRepo, cl changelist.Changelist) error {
 	changes := cl.List()
-	logrus.Debugf("applying %d changes", len(changes))
+	var err error
 	for _, c := range changes {
-		switch c.Scope() {
-		case changelist.ScopeTargets:
-			err := applyTargetsChange(repo, c)
-			if err != nil {
-				return err
-			}
-		default:
-			logrus.Debug("scope not supported: ", c.Scope())
+		if c.Scope() == "targets" {
+			applyTargetsChange(repo, c)
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -44,21 +40,16 @@ func applyChangelist(repo *tuf.TufRepo, cl changelist.Changelist) error {
 
 func applyTargetsChange(repo *tuf.TufRepo, c changelist.Change) error {
 	var err error
-	switch c.Action() {
-	case changelist.ActionCreate:
-		logrus.Debug("changelist add: ", c.Path())
-		meta := &data.FileMeta{}
-		err = json.Unmarshal(c.Content(), meta)
-		if err != nil {
-			return err
-		}
+	meta := &data.FileMeta{}
+	err = json.Unmarshal(c.Content(), meta)
+	if err != nil {
+		return nil
+	}
+	if c.Action() == changelist.ActionCreate {
 		files := data.Files{c.Path(): *meta}
-		_, err = repo.AddTargets(c.Scope(), files)
-	case changelist.ActionDelete:
-		logrus.Debug("changelist remove: ", c.Path())
-		err = repo.RemoveTargets(c.Scope(), c.Path())
-	default:
-		logrus.Debug("action not yet supported: ", c.Action())
+		_, err = repo.AddTargets("targets", files)
+	} else if c.Action() == changelist.ActionDelete {
+		err = repo.RemoveTargets("targets", c.Path())
 	}
 	if err != nil {
 		return err

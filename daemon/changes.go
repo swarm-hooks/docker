@@ -9,5 +9,5 @@ func (daemon *Daemon) ContainerChanges(name string) ([]archive.Change, error) {
 		return nil, err
 	}
 
-	return container.changes()
+	return container.Changes()
 }

@@ -22,17 +22,17 @@ type Changelist interface {
 
 const (
 	// ActionCreate represents a Create action
-	ActionCreate = "create"
+	ActionCreate = iota
 	// ActionUpdate represents an Update action
-	ActionUpdate = "update"
+	ActionUpdate
 	// ActionDelete represents a Delete action
-	ActionDelete = "delete"
+	ActionDelete
 )
 
 // Change is the interface for a TUF Change
 type Change interface {
 	// "create","update", or "delete"
-	Action() string
+	Action() int
 
 	// Where the change should be made.
 	// For TUF this will be the role

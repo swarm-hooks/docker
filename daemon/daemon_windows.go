@@ -15,18 +15,12 @@ import (
 	"github.com/microsoft/hcsshim"
 )
 
-const defaultVirtualSwitch = "Virtual Switch"
+const DefaultVirtualSwitch = "Virtual Switch"
 
-// Changes returns the list of changes between the container and it's
-// parent.
-// CHECK
 func (daemon *Daemon) Changes(container *Container) ([]archive.Change, error) {
 	return daemon.driver.Changes(container.ID, container.ImageID)
 }
 
-// Diff returns the changes between the container and it's parent as
-// an archive.
-// CHECK
 func (daemon *Daemon) Diff(container *Container) (archive.Archive, error) {
 	return daemon.driver.Diff(container.ID, container.ImageID)
 }
@@ -79,14 +73,12 @@ func checkKernel() error {
 	return nil
 }
 
-// adaptContainerSettings is called during container creation to modify any
-// settings necessary in the HostConfig structure.
 func (daemon *Daemon) adaptContainerSettings(hostConfig *runconfig.HostConfig) {
+	// TODO Windows.
 }
 
-// verifyPlatformContainerSettings performs platform-specific validation of the
-// hostconfig and config structures.
-func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *runconfig.HostConfig, config *runconfig.Config) ([]string, error) {
+func (daemon *Daemon) verifyContainerSettings(hostConfig *runconfig.HostConfig, config *runconfig.Config) ([]string, error) {
+	// TODO Windows. Verifications TBC
 	return nil, nil
 }
 
@@ -141,14 +133,12 @@ func isBridgeNetworkDisabled(config *Config) bool {
 func initNetworkController(config *Config) (libnetwork.NetworkController, error) {
 	// Set the name of the virtual switch if not specified by -b on daemon start
 	if config.Bridge.VirtualSwitchName == "" {
-		config.Bridge.VirtualSwitchName = defaultVirtualSwitch
+		config.Bridge.VirtualSwitchName = DefaultVirtualSwitch
 	}
 	return nil, nil
 }
 
-// RegisterLinks sets up links between containers and writes the
-// configuration out for persistence.
-func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.HostConfig) error {
+func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.HostConfig) error {
 	// TODO Windows. Factored out for network modes. There may be more
 	// refactoring required here.
 
@@ -166,7 +156,7 @@ func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.
 			//An error from daemon.Get() means this name could not be found
 			return fmt.Errorf("Could not get container for %s", name)
 		}
-		if err := daemon.registerLink(container, child, alias); err != nil {
+		if err := daemon.RegisterLink(container, child, alias); err != nil {
 			return err
 		}
 	}
@@ -174,7 +164,7 @@ func (daemon *Daemon) registerLinks(container *Container, hostConfig *runconfig.
 	// After we load all the links into the daemon
 	// set them to nil on the hostconfig
 	hostConfig.Links = nil
-	if err := container.writeHostConfig(); err != nil {
+	if err := container.WriteHostConfig(); err != nil {
 		return err
 	}
 	return nil

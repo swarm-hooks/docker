@@ -6,7 +6,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
-// ContainerAttachWithLogsConfig holds the streams to use when connecting to a container to view logs.
+// ContainerAttachWithLogsConfig holds the streams to use
 type ContainerAttachWithLogsConfig struct {
 	InStream                       io.ReadCloser
 	OutStream                      io.Writer
@@ -14,7 +14,6 @@ type ContainerAttachWithLogsConfig struct {
 	Logs, Stream                   bool
 }
 
-// ContainerAttachWithLogs attaches to logs according to the config passed in. See ContainerAttachWithLogsConfig.
 func (daemon *Daemon) ContainerAttachWithLogs(container *Container, c *ContainerAttachWithLogsConfig) error {
 	var errStream io.Writer
 
@@ -38,18 +37,16 @@ func (daemon *Daemon) ContainerAttachWithLogs(container *Container, c *Container
 		stderr = errStream
 	}
 
-	return container.attachWithLogs(stdin, stdout, stderr, c.Logs, c.Stream)
+	return container.AttachWithLogs(stdin, stdout, stderr, c.Logs, c.Stream)
 }
 
-// ContainerWsAttachWithLogsConfig attach with websockets, since all
-// stream data is delegated to the websocket to handle, there
+// ContainerWsAttachWithLogsConfig  attach with websockets, since all stream data is delegated to the websocket to handle, there 
 type ContainerWsAttachWithLogsConfig struct {
 	InStream             io.ReadCloser
 	OutStream, ErrStream io.Writer
 	Logs, Stream         bool
 }
 
-// ContainerWsAttachWithLogs websocket connection
 func (daemon *Daemon) ContainerWsAttachWithLogs(container *Container, c *ContainerWsAttachWithLogsConfig) error {
-	return container.attachWithLogs(c.InStream, c.OutStream, c.ErrStream, c.Logs, c.Stream)
+	return container.AttachWithLogs(c.InStream, c.OutStream, c.ErrStream, c.Logs, c.Stream)
 }

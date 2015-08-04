@@ -295,10 +295,6 @@ __docker_complete_log_driver_options() {
 	return 1
 }
 
-__docker_log_levels() {
-	COMPREPLY=( $( compgen -W "debug info warn error fatal" -- "$cur" ) )
-}
-
 # a selection of the available signals that is most likely of interest in the
 # context of docker containers.
 __docker_signals() {
@@ -319,14 +315,16 @@ __docker_signals() {
 # global options that may appear after the docker command
 _docker_docker() {
 	local boolean_options="
-		$global_boolean_options
+		--debug -D
 		--help -h
+		--tls
+		--tlsverify
 		--version -v
 	"
 
 	case "$prev" in
 		--log-level|-l)
-			__docker_log_levels
+			COMPREPLY=( $( compgen -W "debug info warn error fatal" -- "$cur" ) )
 			return
 			;;
 		$(__docker_to_extglob "$global_options_with_args") )
@@ -341,7 +339,7 @@ _docker_docker() {
 			COMPREPLY=( $( compgen -W "$boolean_options $global_options_with_args" -- "$cur" ) )
 			;;
 		*)
-			local counter=$( __docker_pos_first_nonflag $(__docker_to_extglob "$global_options_with_args") )
+			local counter="$(__docker_pos_first_nonflag $main_options_with_args_glob)"
 			if [ $cword -eq $counter ]; then
 				COMPREPLY=( $( compgen -W "${commands[*]} help" -- "$cur" ) )
 			fi
@@ -455,7 +453,6 @@ _docker_create() {
 
 _docker_daemon() {
 	local boolean_options="
-		$global_boolean_options
 		--help -h
 		--icc=false
 		--ip-forward=false
@@ -466,7 +463,6 @@ _docker_daemon() {
 		--userland-proxy=false
 	"
 	local options_with_args="
-		$global_options_with_args
 		--api-cors-header
 		--bip
 		--bridge -b
@@ -511,10 +507,6 @@ _docker_daemon() {
 			COMPREPLY=( $( compgen -W "aufs devicemapper btrfs overlay" -- "$(echo $cur | tr '[:upper:]' '[:lower:]')" ) )
 			return
 			;;
-		--log-level|-l)
-			__docker_log_levels
-			return
-			;;
 		--log-opt)
 			__docker_log_driver_options
 			return
@@ -522,6 +514,7 @@ _docker_daemon() {
 		$(__docker_to_extglob "$options_with_args") )
 			return
 			;;
+		$main_options_with_args_glob )
 	esac
 
 	case "$cur" in
@@ -738,17 +731,8 @@ _docker_inspect() {
 			COMPREPLY=( $( compgen -W "--format -f --type --help" -- "$cur" ) )
 			;;
 		*)
-			case $(__docker_value_of_option --type) in
-				'')
-					__docker_containers_and_images
-					;;
-				container)
-					__docker_containers_all
-					;;
-				image)
-					__docker_image_repos_and_tags_and_ids
-					;;
-			esac
+			__docker_containers_and_images
+			;;
 	esac
 }
 
@@ -1386,13 +1370,6 @@ _docker() {
 		wait
 	)
 
-	# These options are valid as global options for all client commands
-	# and valid as command options for `docker daemon`
-	local global_boolean_options="
-		--debug -D
-		--tls
-		--tlsverify
-	"
 	local global_options_with_args="
 		--host -H
 		--log-level -l

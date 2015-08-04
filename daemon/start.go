@@ -7,14 +7,13 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
-// ContainerStart starts a container.
 func (daemon *Daemon) ContainerStart(name string, hostConfig *runconfig.HostConfig) error {
 	container, err := daemon.Get(name)
 	if err != nil {
 		return err
 	}
 
-	if container.isPaused() {
+	if container.IsPaused() {
 		return fmt.Errorf("Cannot start a paused container, try unpause instead.")
 	}
 

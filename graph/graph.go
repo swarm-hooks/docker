@@ -107,7 +107,7 @@ func NewGraph(root string, driver graphdriver.Driver) (*Graph, error) {
 		return nil, err
 	}
 	// Create the root directory if it doesn't exists
-	if err := system.MkdirAll(root, 0700); err != nil {
+	if err := system.MkdirAll(root, 0700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
@@ -152,11 +152,10 @@ func (graph *Graph) restore() error {
 	return nil
 }
 
-// IsNotExist detects whether an image exists by parsing the incoming error
-// message.
+// IsNotExist detects whether an image exists by parsing the incoming error message.
+// FIXME: Implement error subclass instead of looking at the error text
+// Note: This is the way golang implements os.IsNotExists on Plan9
 func (graph *Graph) IsNotExist(err error, id string) bool {
-	// FIXME: Implement error subclass instead of looking at the error text
-	// Note: This is the way golang implements os.IsNotExists on Plan9
 	return err != nil && (strings.Contains(strings.ToLower(err.Error()), "does not exist") || strings.Contains(strings.ToLower(err.Error()), "no such")) && strings.Contains(err.Error(), id)
 }
 
@@ -416,13 +415,13 @@ func (graph *Graph) ByParent() map[string][]*image.Image {
 	return byParent
 }
 
-// Retain keeps the images and layers that are in the pulling chain so that
-// they are not deleted. If not retained, they may be deleted by rmi.
+// Retain keeps the images and layers that are in pulling chain so that they are not deleted.
+// If not, they may be deleted by rmi with dangling condition.
 func (graph *Graph) Retain(sessionID string, layerIDs ...string) {
 	graph.retained.Add(sessionID, layerIDs)
 }
 
-// Release removes the referenced image ID from the provided set of layers.
+// Release removes the referenced image id from the provided set of layers.
 func (graph *Graph) Release(sessionID string, layerIDs ...string) {
 	graph.retained.Delete(sessionID, layerIDs)
 }

@@ -18,10 +18,9 @@ type ContainerStatsConfig struct {
 	Stop      <-chan bool
 }
 
-// ContainerStats writes information about the container to the stream
-// given in the config object.
+// ContainerStats writes information about the container to the stream given in the config object. 
 func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) error {
-	updates, err := daemon.subscribeToContainerStats(name)
+	updates, err := daemon.SubscribeToContainerStats(name)
 	if err != nil {
 		return err
 	}
@@ -30,7 +29,7 @@ func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) 
 		config.OutStream.Write(nil)
 	}
 
-	var preCPUStats types.CpuStats
+	var preCpuStats types.CpuStats
 	getStat := func(v interface{}) *types.Stats {
 		update := v.(*execdriver.ResourceStats)
 		// Retrieve the nw statistics from libnetwork and inject them in the Stats
@@ -38,17 +37,17 @@ func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) 
 			update.Stats.Interfaces = nwStats
 		}
 		ss := convertStatsToAPITypes(update.Stats)
-		ss.PreCpuStats = preCPUStats
+		ss.PreCpuStats = preCpuStats
 		ss.MemoryStats.Limit = uint64(update.MemoryLimit)
 		ss.Read = update.Read
 		ss.CpuStats.SystemUsage = update.SystemUsage
-		preCPUStats = ss.CpuStats
+		preCpuStats = ss.CpuStats
 		return ss
 	}
 
 	enc := json.NewEncoder(config.OutStream)
 
-	defer daemon.unsubscribeToContainerStats(name, updates)
+	defer daemon.UnsubscribeToContainerStats(name, updates)
 
 	noStreamFirstFrame := true
 	for {

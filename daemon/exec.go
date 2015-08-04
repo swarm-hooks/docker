@@ -17,16 +17,13 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
-// execConfig holds the configurations for execs.
-//
-// perhaps this should be exported?
 type execConfig struct {
 	sync.Mutex
 	ID            string
 	Running       bool
 	ExitCode      int
 	ProcessConfig *execdriver.ProcessConfig
-	streamConfig
+	StreamConfig
 	OpenStdin  bool
 	OpenStderr bool
 	OpenStdout bool
@@ -125,13 +122,12 @@ func (d *Daemon) getActiveContainer(name string) (*Container, error) {
 	if !container.IsRunning() {
 		return nil, fmt.Errorf("Container %s is not running", name)
 	}
-	if container.isPaused() {
+	if container.IsPaused() {
 		return nil, fmt.Errorf("Container %s is paused, unpause the container before exec", name)
 	}
 	return container, nil
 }
 
-// ContainerExecCreate sets up an exec in a running container.
 func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, error) {
 	// Not all drivers support Exec (LXC for example)
 	if err := checkExecSupport(d.execDriver.Name()); err != nil {
@@ -163,7 +159,7 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 		OpenStdin:     config.AttachStdin,
 		OpenStdout:    config.AttachStdout,
 		OpenStderr:    config.AttachStderr,
-		streamConfig:  streamConfig{},
+		StreamConfig:  StreamConfig{},
 		ProcessConfig: processConfig,
 		Container:     container,
 		Running:       false,
@@ -172,13 +168,12 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 
 	d.registerExecCommand(execConfig)
 
-	container.logEvent("exec_create: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
+	container.LogEvent("exec_create: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
 
 	return execConfig.ID, nil
+
 }
 
-// ContainerExecStart starts a previously set up exec instance. The
-// std streams are set up.
 func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) error {
 
 	var (
@@ -206,7 +201,7 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	logrus.Debugf("starting exec command %s in container %s", execConfig.ID, execConfig.Container.ID)
 	container := execConfig.Container
 
-	container.logEvent("exec_start: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
+	container.LogEvent("exec_start: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
 
 	if execConfig.OpenStdin {
 		r, w := io.Pipe()
@@ -224,16 +219,16 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 		cStderr = stderr
 	}
 
-	execConfig.streamConfig.stderr = broadcastwriter.New()
-	execConfig.streamConfig.stdout = broadcastwriter.New()
+	execConfig.StreamConfig.stderr = broadcastwriter.New()
+	execConfig.StreamConfig.stdout = broadcastwriter.New()
 	// Attach to stdin
 	if execConfig.OpenStdin {
-		execConfig.streamConfig.stdin, execConfig.streamConfig.stdinPipe = io.Pipe()
+		execConfig.StreamConfig.stdin, execConfig.StreamConfig.stdinPipe = io.Pipe()
 	} else {
-		execConfig.streamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
+		execConfig.StreamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
 	}
 
-	attachErr := attach(&execConfig.streamConfig, execConfig.OpenStdin, true, execConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
+	attachErr := attach(&execConfig.StreamConfig, execConfig.OpenStdin, true, execConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
 
 	execErr := make(chan error)
 
@@ -242,7 +237,7 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	// the exitStatus) even after the cmd is done running.
 
 	go func() {
-		if err := container.exec(execConfig); err != nil {
+		if err := container.Exec(execConfig); err != nil {
 			execErr <- fmt.Errorf("Cannot run exec command %s in container %s: %s", execName, container.ID, err)
 		}
 	}()
@@ -259,7 +254,6 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	return nil
 }
 
-// Exec calls the underlying exec driver to run
 func (d *Daemon) Exec(c *Container, execConfig *execConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
 	exitStatus, err := d.execDriver.Exec(c.command, execConfig.ProcessConfig, pipes, startCallback)
 

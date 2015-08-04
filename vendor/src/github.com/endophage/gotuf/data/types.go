@@ -43,10 +43,10 @@ const (
 )
 
 var TUFTypes = map[string]string{
-	CanonicalRootRole:      "Root",
-	CanonicalTargetsRole:   "Targets",
-	CanonicalSnapshotRole:  "Snapshot",
-	CanonicalTimestampRole: "Timestamp",
+	"targets":   "Targets",
+	"root":      "Root",
+	"snapshot":  "Snapshot",
+	"timestamp": "Timestamp",
 }
 
 // SetTUFTypes allows one to override some or all of the default
@@ -57,25 +57,19 @@ func SetTUFTypes(ts map[string]string) {
 	}
 }
 
-func ValidTUFType(typ, role string) bool {
-	if ValidRole(role) {
-		// All targets delegation roles must have
-		// the valid type is for targets.
-		role = CanonicalRole(role)
-		if role == "" {
-			// role is unknown and does not map to
-			// a type
-			return false
-		}
-		if strings.HasPrefix(role, CanonicalTargetsRole+"/") {
-			role = CanonicalTargetsRole
-		}
-	}
+// Checks if type is correct.
+func ValidTUFType(t string) bool {
 	// most people will just use the defaults so have this optimal check
 	// first. Do comparison just in case there is some unknown vulnerability
 	// if a key and value in the map differ.
-	if v, ok := TUFTypes[role]; ok {
-		return typ == v
+	if v, ok := TUFTypes[t]; ok {
+		return t == v
+	}
+	// For people that feel the need to change the default type names.
+	for _, v := range TUFTypes {
+		if t == v {
+			return true
+		}
 	}
 	return false
 }
@@ -144,10 +138,10 @@ func NewDelegations() *Delegations {
 
 // defines number of days in which something should expire
 var defaultExpiryTimes = map[string]int{
-	CanonicalRootRole:      365,
-	CanonicalTargetsRole:   90,
-	CanonicalSnapshotRole:  7,
-	CanonicalTimestampRole: 1,
+	"root":      365,
+	"targets":   90,
+	"snapshot":  7,
+	"timestamp": 1,
 }
 
 // SetDefaultExpiryTimes allows one to change the default expiries.

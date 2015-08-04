@@ -17,8 +17,6 @@ func (daemon *Daemon) List() []*Container {
 	return daemon.containers.List()
 }
 
-// ContainersConfig is a struct for configuring the command to list
-// containers.
 type ContainersConfig struct {
 	All     bool
 	Since   string
@@ -28,7 +26,6 @@ type ContainersConfig struct {
 	Filters string
 }
 
-// Containers returns a list of all the containers.
 func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, error) {
 	var (
 		foundBefore bool
@@ -65,7 +62,7 @@ func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, 
 		}
 	}
 	names := map[string][]string{}
-	daemon.containerGraph().Walk("/", func(p string, e *graphdb.Entity) error {
+	daemon.ContainerGraph().Walk("/", func(p string, e *graphdb.Entity) error {
 		names[e.ID()] = append(names[e.ID()], p)
 		return nil
 	}, 1)
@@ -157,7 +154,7 @@ func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, 
 		}
 		newC.Created = int(container.Created.Unix())
 		newC.Status = container.State.String()
-		newC.HostConfig.NetworkMode = string(container.hostConfig.NetworkMode)
+		newC.HostConfig.NetworkMode = string(container.HostConfig().NetworkMode)
 
 		newC.Ports = []types.Port{}
 		for port, bindings := range container.NetworkSettings.Ports {
@@ -187,7 +184,7 @@ func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, 
 		}
 
 		if config.Size {
-			sizeRw, sizeRootFs := container.getSize()
+			sizeRw, sizeRootFs := container.GetSize()
 			newC.SizeRw = int(sizeRw)
 			newC.SizeRootFs = int(sizeRootFs)
 		}

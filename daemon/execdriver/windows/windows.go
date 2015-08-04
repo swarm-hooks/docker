@@ -20,7 +20,6 @@ var dummyMode bool
 // This allows the daemon to terminate containers rather than shutdown
 var terminateMode bool
 
-// Define name and version for windows
 var (
 	DriverName = "Windows 1854"
 	Version    = dockerversion.VERSION + " " + dockerversion.GITCOMMIT
@@ -30,22 +29,18 @@ type activeContainer struct {
 	command *execdriver.Command
 }
 
-// Driver contains all information for windows driver,
-// it implements execdriver.Driver
-type Driver struct {
+type driver struct {
 	root             string
 	initPath         string
 	activeContainers map[string]*activeContainer
 	sync.Mutex
 }
 
-// Name implements the exec driver Driver interface.
-func (d *Driver) Name() string {
+func (d *driver) Name() string {
 	return fmt.Sprintf("%s %s", DriverName, Version)
 }
 
-// NewDriver returns a new windows driver, called from NewDriver of execdriver.
-func NewDriver(root, initPath string, options []string) (*Driver, error) {
+func NewDriver(root, initPath string, options []string) (*driver, error) {
 
 	for _, option := range options {
 		key, val, err := parsers.ParseKeyValueOpt(option)
@@ -74,7 +69,7 @@ func NewDriver(root, initPath string, options []string) (*Driver, error) {
 		}
 	}
 
-	return &Driver{
+	return &driver{
 		root:             root,
 		initPath:         initPath,
 		activeContainers: make(map[string]*activeContainer),

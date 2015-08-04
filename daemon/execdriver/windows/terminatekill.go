@@ -8,14 +8,12 @@ import (
 	"github.com/microsoft/hcsshim"
 )
 
-// Terminate implements the exec driver Driver interface.
-func (d *Driver) Terminate(p *execdriver.Command) error {
+func (d *driver) Terminate(p *execdriver.Command) error {
 	logrus.Debugf("WindowsExec: Terminate() id=%s", p.ID)
 	return kill(p.ID, p.ContainerPid)
 }
 
-// Kill implements the exec driver Driver interface.
-func (d *Driver) Kill(p *execdriver.Command, sig int) error {
+func (d *driver) Kill(p *execdriver.Command, sig int) error {
 	logrus.Debugf("WindowsExec: Kill() id=%s sig=%d", p.ID, sig)
 	return kill(p.ID, p.ContainerPid)
 }

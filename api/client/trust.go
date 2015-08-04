@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -177,16 +176,11 @@ func convertTarget(t client.Target) (target, error) {
 }
 
 func (cli *DockerCli) getPassphraseRetriever() passphrase.Retriever {
-	aliasMap := map[string]string{
-		"root":     "offline",
-		"snapshot": "tagging",
-		"targets":  "tagging",
-	}
-	baseRetriever := passphrase.PromptRetrieverWithInOut(cli.in, cli.out, aliasMap)
+	baseRetriever := passphrase.PromptRetrieverWithInOut(cli.in, cli.out)
 	env := map[string]string{
-		"root":     os.Getenv("DOCKER_CONTENT_TRUST_OFFLINE_PASSPHRASE"),
-		"snapshot": os.Getenv("DOCKER_CONTENT_TRUST_TAGGING_PASSPHRASE"),
-		"targets":  os.Getenv("DOCKER_CONTENT_TRUST_TAGGING_PASSPHRASE"),
+		"root":     os.Getenv("DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE"),
+		"targets":  os.Getenv("DOCKER_CONTENT_TRUST_TARGET_PASSPHRASE"),
+		"snapshot": os.Getenv("DOCKER_CONTENT_TRUST_SNAPSHOT_PASSPHRASE"),
 	}
 	return func(keyName string, alias string, createNew bool, numAttempts int) (string, bool, error) {
 		if v := env[alias]; v != "" {
@@ -317,22 +311,6 @@ func (cli *DockerCli) trustedPull(repoInfo *registry.RepositoryInfo, ref registr
 	return nil
 }
 
-func selectKey(keys map[string]string) string {
-	if len(keys) == 0 {
-		return ""
-	}
-
-	keyIDs := []string{}
-	for k := range keys {
-		keyIDs = append(keyIDs, k)
-	}
-
-	// TODO(dmcgowan): let user choose if multiple keys, now pick consistently
-	sort.Strings(keyIDs)
-
-	return keyIDs[0]
-}
-
 func targetStream(in io.Writer) (io.WriteCloser, <-chan []target) {
 	r, w := io.Pipe()
 	out := io.MultiWriter(in, w)
@@ -431,13 +409,16 @@ func (cli *DockerCli) trustedPush(repoInfo *registry.RepositoryInfo, tag string,
 
 	ks := repo.KeyStoreManager
 	keys := ks.RootKeyStore().ListKeys()
+	var rootKey string
 
-	rootKey := selectKey(keys)
-	if rootKey == "" {
+	if len(keys) == 0 {
 		rootKey, err = ks.GenRootKey("ecdsa")
 		if err != nil {
 			return err
 		}
+	} else {
+		// TODO(dmcgowan): let user choose
+		rootKey = keys[0]
 	}
 
 	cryptoService, err := ks.GetRootCryptoService(rootKey)
