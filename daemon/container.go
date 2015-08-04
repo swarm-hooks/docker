@@ -65,25 +65,27 @@ type CommonContainer struct {
 	root   string         // Path to the "home" of the container, including metadata.
 	basefs string         // Path to the graphdriver mountpoint
 
-	ID                       string
-	Created                  time.Time
-	Path                     string
-	Args                     []string
-	Config                   *runconfig.Config
-	ImageID                  string `json:"Image"`
-	NetworkSettings          *network.Settings
-	LogPath                  string
-	Name                     string
-	Driver                   string
-	ExecDriver               string
-	MountLabel, ProcessLabel string
-	RestartCount             int
-	HasBeenStartedBefore     bool
-	hostConfig               *runconfig.HostConfig
-	command                  *execdriver.Command
-	monitor                  *containerMonitor
-	execCommands             *execStore
-	daemon                   *Daemon
+	ID              string
+	Created         time.Time
+	Path            string
+	Args            []string
+	Config          *runconfig.Config
+	ImageID         string `json:"Image"`
+	NetworkSettings *network.Settings
+	LogPath         string
+	Name            string
+	Driver          string
+	ExecDriver      string
+	// MountLabel contains the options for the 'mount' command
+	MountLabel           string
+	ProcessLabel         string
+	RestartCount         int
+	HasBeenStartedBefore bool
+	hostConfig           *runconfig.HostConfig
+	command              *execdriver.Command
+	monitor              *containerMonitor
+	execCommands         *execStore
+	daemon               *Daemon
 	// logDriver for closing
 	logDriver logger.Logger
 	logCopier *logger.Copier
@@ -442,6 +444,7 @@ func (container *Container) Unpause() error {
 	return nil
 }
 
+// Kill
 func (container *Container) Kill() error {
 	if !container.IsRunning() {
 		return ErrContainerNotRunning{container.ID}
@@ -509,6 +512,7 @@ func (container *Container) Stop(seconds int) error {
 	return nil
 }
 
+// Restart attempts to gracefully stop and then start the container.
 func (container *Container) Restart(seconds int) error {
 	// Avoid unnecessarily unmounting and then directly mounting
 	// the container when the container stops and then starts

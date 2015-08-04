@@ -788,6 +788,7 @@ func (daemon *Daemon) Shutdown() error {
 	return nil
 }
 
+// Mount
 func (daemon *Daemon) Mount(container *Container) error {
 	dir, err := daemon.driver.Get(container.ID, container.GetMountLabel())
 	if err != nil {

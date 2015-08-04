@@ -2,6 +2,7 @@ package daemon
 
 import "fmt"
 
+// ContainerRestart
 func (daemon *Daemon) ContainerRestart(name string, seconds int) error {
 	container, err := daemon.Get(name)
 	if err != nil {
