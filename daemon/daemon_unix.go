@@ -32,11 +32,15 @@ import (
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
+// Changes returns the list of changes between the container and it's
+// parent.
 func (daemon *Daemon) Changes(container *Container) ([]archive.Change, error) {
 	initID := fmt.Sprintf("%s-init", container.ID)
 	return daemon.driver.Changes(container.ID, initID)
 }
 
+// Changes returns the changes between the container and it's parent
+// as an archive.
 func (daemon *Daemon) Diff(container *Container) (archive.Archive, error) {
 	initID := fmt.Sprintf("%s-init", container.ID)
 	return daemon.driver.Diff(container.ID, initID)

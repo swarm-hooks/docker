@@ -565,6 +565,7 @@ func (container *Container) Export() (archive.Archive, error) {
 	return arch, err
 }
 
+// Mount sets container.basefs 
 func (container *Container) Mount() error {
 	return container.daemon.Mount(container)
 }
