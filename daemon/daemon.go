@@ -879,7 +879,7 @@ func (daemon *Daemon) Config() *Config {
 	return daemon.config
 }
 
-func (daemon *Daemon) SystemConfig() *sysinfo.SysInfo {
+func (daemon *Daemon) systemConfig() *sysinfo.SysInfo {
 	return daemon.sysInfo
 }
 
