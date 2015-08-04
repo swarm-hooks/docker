@@ -9,10 +9,15 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+// ContainerRmConfig is a holder for passing in runtime config.
 type ContainerRmConfig struct {
 	ForceRemove, RemoveVolume, RemoveLink bool
 }
 
+// ContainerRm removes the container id from the filesystem. An error
+// is returned if the container is not found, or if the remove
+// fails. If the remove succeeds, the container name is released, and
+// network links are removed.
 func (daemon *Daemon) ContainerRm(name string, config *ContainerRmConfig) error {
 	container, err := daemon.Get(name)
 	if err != nil {
@@ -139,8 +144,4 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 
 	container.LogEvent("destroy")
 	return nil
-}
-
-func (daemon *Daemon) DeleteVolumes(c *Container) error {
-	return c.removeMountPoints()
 }
