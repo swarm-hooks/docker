@@ -503,8 +503,8 @@ func setupInitLayer(initLayer string) error {
 	return nil
 }
 
-// why can't we inline this into server-experimental?
-func (daemon *Daemon) NetworkApiRouter() func(w http.ResponseWriter, req *http.Request) {
+// NetworkAPIRouter why can't we inline this into server-experimental?
+func (daemon *Daemon) NetworkAPIRouter() func(w http.ResponseWriter, req *http.Request) {
 	return nwapi.NewHTTPHandler(daemon.netController)
 }
 
