@@ -110,7 +110,7 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 			daemon.idIndex.Delete(container.ID)
 			daemon.containers.Delete(container.ID)
 			os.RemoveAll(container.root)
-			container.LogEvent("destroy")
+			container.logEvent("destroy")
 		}
 	}()
 
@@ -142,6 +142,6 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 	daemon.idIndex.Delete(container.ID)
 	daemon.containers.Delete(container.ID)
 
-	container.LogEvent("destroy")
+	container.logEvent("destroy")
 	return nil
 }

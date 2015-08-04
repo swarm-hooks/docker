@@ -178,7 +178,7 @@ func (container *Container) WriteHostConfig() error {
 	return ioutil.WriteFile(pth, data, 0666)
 }
 
-func (container *Container) LogEvent(action string) {
+func (container *Container) logEvent(action string) {
 	d := container.daemon
 	d.EventsService.Log(
 		action,
@@ -250,7 +250,7 @@ func (container *Container) Start() (err error) {
 			}
 			container.toDisk()
 			container.cleanup()
-			container.LogEvent("die")
+			container.logEvent("die")
 		}
 	}()
 
@@ -389,7 +389,7 @@ func (container *Container) KillSig(sig int) error {
 	if err := container.daemon.Kill(container, sig); err != nil {
 		return err
 	}
-	container.LogEvent("kill")
+	container.logEvent("kill")
 	return nil
 }
 
@@ -421,7 +421,7 @@ func (container *Container) Pause() error {
 		return err
 	}
 	container.Paused = true
-	container.LogEvent("pause")
+	container.logEvent("pause")
 	return nil
 }
 
@@ -443,7 +443,7 @@ func (container *Container) Unpause() error {
 		return err
 	}
 	container.Paused = false
-	container.LogEvent("unpause")
+	container.logEvent("unpause")
 	return nil
 }
 
@@ -511,7 +511,7 @@ func (container *Container) Stop(seconds int) error {
 		}
 	}
 
-	container.LogEvent("stop")
+	container.logEvent("stop")
 	return nil
 }
 
@@ -532,7 +532,7 @@ func (container *Container) Restart(seconds int) error {
 		return err
 	}
 
-	container.LogEvent("restart")
+	container.logEvent("restart")
 	return nil
 }
 
@@ -545,7 +545,7 @@ func (container *Container) Resize(h, w int) error {
 	if err := container.command.ProcessConfig.Terminal.Resize(h, w); err != nil {
 		return err
 	}
-	container.LogEvent("resize")
+	container.logEvent("resize")
 	return nil
 }
 
@@ -564,7 +564,7 @@ func (container *Container) Export() (archive.Archive, error) {
 		container.Unmount()
 		return err
 	})
-	container.LogEvent("export")
+	container.logEvent("export")
 	return arch, err
 }
 
@@ -682,7 +682,7 @@ func (container *Container) Copy(resource string) (rc io.ReadCloser, err error) 
 		container.Unlock()
 		return err
 	})
-	container.LogEvent("copy")
+	container.logEvent("copy")
 	return reader, nil
 }
 
@@ -908,7 +908,7 @@ func (container *Container) attachWithLogs(stdin io.ReadCloser, stdout, stderr i
 		}
 	}
 
-	container.LogEvent("attach")
+	container.logEvent("attach")
 
 	//stream
 	if stream {

@@ -218,7 +218,7 @@ func (container *Container) ArchivePath(path string) (content io.ReadCloser, sta
 		return err
 	})
 
-	container.LogEvent("archive-path")
+	container.logEvent("archive-path")
 
 	return content, stat, nil
 }
@@ -302,7 +302,7 @@ func (container *Container) ExtractToDir(path string, noOverwriteDirNonDir bool,
 		return err
 	}
 
-	container.LogEvent("extract-to-dir")
+	container.logEvent("extract-to-dir")
 
 	return nil
 }

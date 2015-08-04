@@ -43,6 +43,6 @@ func (daemon *Daemon) ContainerRename(oldName, newName string) error {
 		return err
 	}
 
-	container.LogEvent("rename")
+	container.logEvent("rename")
 	return nil
 }

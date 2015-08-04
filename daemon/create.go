@@ -101,7 +101,7 @@ func (daemon *Daemon) Create(config *runconfig.Config, hostConfig *runconfig.Hos
 		logrus.Errorf("Error saving new container to disk: %v", err)
 		return nil, nil, err
 	}
-	container.LogEvent("create")
+	container.logEvent("create")
 	return container, warnings, nil
 }
 

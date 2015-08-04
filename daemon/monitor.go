@@ -134,7 +134,7 @@ func (m *containerMonitor) Start() error {
 
 		pipes := execdriver.NewPipes(m.container.stdin, m.container.stdout, m.container.stderr, m.container.Config.OpenStdin)
 
-		m.container.LogEvent("start")
+		m.container.logEvent("start")
 
 		m.lastStartTime = time.Now()
 
@@ -159,9 +159,9 @@ func (m *containerMonitor) Start() error {
 		if m.shouldRestart(exitStatus.ExitCode) {
 			m.container.setRestarting(&exitStatus)
 			if exitStatus.OOMKilled {
-				m.container.LogEvent("oom")
+				m.container.logEvent("oom")
 			}
-			m.container.LogEvent("die")
+			m.container.logEvent("die")
 			m.resetContainer(true)
 
 			// sleep with a small time increment between each restart to help avoid issues cased by quickly
@@ -176,9 +176,9 @@ func (m *containerMonitor) Start() error {
 			continue
 		}
 		if exitStatus.OOMKilled {
-			m.container.LogEvent("oom")
+			m.container.logEvent("oom")
 		}
-		m.container.LogEvent("die")
+		m.container.logEvent("die")
 		m.resetContainer(true)
 		return err
 	}
