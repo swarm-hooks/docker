@@ -86,9 +86,9 @@ func TestGet(t *testing.T) {
 	graph.Set(c5.Name, c5.ID)
 
 	daemon := &Daemon{
-		containers:     store,
-		idIndex:        index,
-		containerGraph: graph,
+		containers:       store,
+		idIndex:          index,
+		containerGraphDB: graph,
 	}
 
 	if container, _ := daemon.Get("3cdbd1aa394fd68559fd1441d6eff2ab7c1e6363582c82febfaa8045df3bd8de"); container != c2 {

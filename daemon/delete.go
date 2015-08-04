@@ -114,7 +114,7 @@ func (daemon *Daemon) rm(container *Container, forceRemove bool) (err error) {
 		}
 	}()
 
-	if _, err := daemon.containerGraph.Purge(container.ID); err != nil {
+	if _, err := daemon.containerGraphDB.Purge(container.ID); err != nil {
 		logrus.Debugf("Unable to remove container from link graph: %s", err)
 	}
 

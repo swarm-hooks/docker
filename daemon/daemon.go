@@ -101,7 +101,7 @@ type Daemon struct {
 	idIndex          *truncindex.TruncIndex
 	sysInfo          *sysinfo.SysInfo
 	config           *Config
-	containerGraph   *graphdb.Database
+	containerGraphDB *graphdb.Database
 	driver           graphdriver.Driver
 	execDriver       execdriver.Driver
 	statsCollector   *statsCollector
@@ -287,7 +287,7 @@ func (daemon *Daemon) restore() error {
 		}
 	}
 
-	if entities := daemon.containerGraph.List("/", -1); entities != nil {
+	if entities := daemon.containerGraphDB.List("/", -1); entities != nil {
 		for _, p := range entities.Paths() {
 			if !debug && logrus.GetLevel() == logrus.InfoLevel {
 				fmt.Print(".")
@@ -384,7 +384,7 @@ func (daemon *Daemon) reserveName(id, name string) (string, error) {
 		name = "/" + name
 	}
 
-	if _, err := daemon.containerGraph.Set(name, id); err != nil {
+	if _, err := daemon.containerGraphDB.Set(name, id); err != nil {
 		if !graphdb.IsNonUniqueNameError(err) {
 			return "", err
 		}
@@ -396,7 +396,7 @@ func (daemon *Daemon) reserveName(id, name string) (string, error) {
 			}
 
 			// Remove name and continue starting the container
-			if err := daemon.containerGraph.Delete(name); err != nil {
+			if err := daemon.containerGraphDB.Delete(name); err != nil {
 				return "", err
 			}
 		} else {
@@ -417,7 +417,7 @@ func (daemon *Daemon) generateNewName(id string) (string, error) {
 			name = "/" + name
 		}
 
-		if _, err := daemon.containerGraph.Set(name, id); err != nil {
+		if _, err := daemon.containerGraphDB.Set(name, id); err != nil {
 			if !graphdb.IsNonUniqueNameError(err) {
 				return "", err
 			}
@@ -427,7 +427,7 @@ func (daemon *Daemon) generateNewName(id string) (string, error) {
 	}
 
 	name = "/" + stringid.TruncateID(id)
-	if _, err := daemon.containerGraph.Set(name, id); err != nil {
+	if _, err := daemon.containerGraphDB.Set(name, id); err != nil {
 		return "", err
 	}
 	return name, nil
@@ -506,7 +506,7 @@ func (daemon *Daemon) GetByName(name string) (*Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	entity := daemon.containerGraph.Get(fullName)
+	entity := daemon.containerGraphDB.Get(fullName)
 	if entity == nil {
 		return nil, fmt.Errorf("Could not find entity for %s", name)
 	}
@@ -525,7 +525,7 @@ func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
 	}
 	children := make(map[string]*Container)
 
-	err = daemon.containerGraph.Walk(name, func(p string, e *graphdb.Entity) error {
+	err = daemon.containerGraphDB.Walk(name, func(p string, e *graphdb.Entity) error {
 		c, err := daemon.Get(e.ID())
 		if err != nil {
 			return err
@@ -547,14 +547,14 @@ func (daemon *Daemon) Parents(name string) ([]string, error) {
 		return nil, err
 	}
 
-	return daemon.containerGraph.Parents(name)
+	return daemon.containerGraphDB.Parents(name)
 }
 
 // RegisterLink
 func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error {
 	fullName := filepath.Join(parent.Name, alias)
-	if !daemon.containerGraph.Exists(fullName) {
-		_, err := daemon.containerGraph.Set(fullName, child.ID)
+	if !daemon.containerGraphDB.Exists(fullName) {
+		_, err := daemon.containerGraphDB.Set(fullName, child.ID)
 		return err
 	}
 	return nil
@@ -710,7 +710,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 		return nil, err
 	}
 
-	d.containerGraph = graph
+	d.containerGraphDB = graph
 
 	var sysInitPath string
 	if config.ExecDriver == "lxc" {
@@ -789,8 +789,8 @@ func (daemon *Daemon) Shutdown() error {
 		}
 	}
 
-	if daemon.containerGraph != nil {
-		if err := daemon.containerGraph.Close(); err != nil {
+	if daemon.containerGraphDB != nil {
+		if err := daemon.containerGraphDB.Close(); err != nil {
 			logrus.Errorf("Error during container graph.Close(): %v", err)
 		}
 	}
@@ -896,7 +896,7 @@ func (daemon *Daemon) ExecutionDriver() execdriver.Driver {
 }
 
 func (daemon *Daemon) containerGraph() *graphdb.Database {
-	return daemon.containerGraph
+	return daemon.containerGraphDB
 }
 
 // ImageGetCached return an image created before the given image with the same configuration.
