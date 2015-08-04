@@ -39,8 +39,8 @@ func (daemon *Daemon) Changes(container *Container) ([]archive.Change, error) {
 	return daemon.driver.Changes(container.ID, initID)
 }
 
-// Changes returns the changes between the container and it's parent
-// as an archive.
+// Diff returns the changes between the container and it's parent as
+// an archive.
 func (daemon *Daemon) Diff(container *Container) (archive.Archive, error) {
 	initID := fmt.Sprintf("%s-init", container.ID)
 	return daemon.driver.Diff(container.ID, initID)
@@ -503,10 +503,12 @@ func setupInitLayer(initLayer string) error {
 	return nil
 }
 
+// why can't we inline this into server-experimental?
 func (daemon *Daemon) NetworkApiRouter() func(w http.ResponseWriter, req *http.Request) {
 	return nwapi.NewHTTPHandler(daemon.netController)
 }
 
+// RegisterLinks writes the links to a file.
 func (daemon *Daemon) RegisterLinks(container *Container, hostConfig *runconfig.HostConfig) error {
 	if hostConfig == nil || hostConfig.Links == nil {
 		return nil
