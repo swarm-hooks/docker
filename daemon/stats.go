@@ -30,7 +30,7 @@ func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) 
 		config.OutStream.Write(nil)
 	}
 
-	var preCpuStats types.CpuStats
+	var preCPUStats types.CpuStats
 	getStat := func(v interface{}) *types.Stats {
 		update := v.(*execdriver.ResourceStats)
 		// Retrieve the nw statistics from libnetwork and inject them in the Stats
