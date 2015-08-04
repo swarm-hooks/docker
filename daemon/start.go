@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
+// ContainerStart starts a container.
 func (daemon *Daemon) ContainerStart(name string, hostConfig *runconfig.HostConfig) error {
 	container, err := daemon.Get(name)
 	if err != nil {

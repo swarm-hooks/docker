@@ -34,10 +34,7 @@ import (
 )
 
 var (
-	ErrNotATTY                 = errors.New("The PTY is not a file")
-	ErrNoTTY                   = errors.New("No PTY found")
-	ErrContainerStart          = errors.New("The container failed to start. Unknown error")
-	ErrContainerStartTimeout   = errors.New("The container failed to start due to timed out.")
+	// ErrContainerRootfsReadonly is returned when a container rootfs is marked readonly (perhaps move to archive.go, the only site of usage.
 	ErrContainerRootfsReadonly = errors.New("container rootfs is marked read-only")
 )
 
@@ -797,13 +794,13 @@ func (container *Container) Stats() (*execdriver.ResourceStats, error) {
 	return container.daemon.Stats(container)
 }
 
-func (c *Container) LogDriverType() string {
-	c.Lock()
-	defer c.Unlock()
-	if c.hostConfig.LogConfig.Type == "" {
-		return c.daemon.defaultLogConfig.Type
+func (container *Container) LogDriverType() string {
+	container.Lock()
+	defer container.Unlock()
+	if container.hostConfig.LogConfig.Type == "" {
+		return container.daemon.defaultLogConfig.Type
 	}
-	return c.hostConfig.LogConfig.Type
+	return container.hostConfig.LogConfig.Type
 }
 
 func (container *Container) GetExecIDs() []string {
