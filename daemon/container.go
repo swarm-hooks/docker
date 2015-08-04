@@ -135,7 +135,7 @@ func (container *Container) toDisk() error {
 	return container.writeHostConfig()
 }
 
-func (container *Container) ToDisk() error {
+func (container *Container) toDiskLocking() error {
 	container.Lock()
 	err := container.toDisk()
 	container.Unlock()

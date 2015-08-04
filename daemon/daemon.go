@@ -223,7 +223,7 @@ func (daemon *Daemon) register(container *Container, updateSuffixarray bool) err
 		if err := container.Unmount(); err != nil {
 			logrus.Debugf("unmount error %s", err)
 		}
-		if err := container.ToDisk(); err != nil {
+		if err := container.toDiskLocking(); err != nil {
 			logrus.Errorf("Error saving stopped state to disk: %v", err)
 		}
 	}
@@ -239,7 +239,7 @@ func (daemon *Daemon) ensureName(container *Container) error {
 		}
 		container.Name = name
 
-		if err := container.ToDisk(); err != nil {
+		if err := container.toDiskLocking(); err != nil {
 			logrus.Errorf("Error saving container name to disk: %v", err)
 		}
 	}

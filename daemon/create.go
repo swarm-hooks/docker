@@ -97,7 +97,7 @@ func (daemon *Daemon) Create(config *runconfig.Config, hostConfig *runconfig.Hos
 		return nil, nil, err
 	}
 
-	if err := container.ToDisk(); err != nil {
+	if err := container.toDiskLocking(); err != nil {
 		logrus.Errorf("Error saving new container to disk: %v", err)
 		return nil, nil, err
 	}

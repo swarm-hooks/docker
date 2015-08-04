@@ -265,7 +265,7 @@ func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid
 		close(m.startSignal)
 	}
 
-	if err := m.container.ToDisk(); err != nil {
+	if err := m.container.toDiskLocking(); err != nil {
 		logrus.Errorf("Error saving container to disk: %v", err)
 	}
 }
