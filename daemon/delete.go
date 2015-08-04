@@ -44,7 +44,7 @@ func (daemon *Daemon) ContainerRm(name string, config *ContainerRmConfig) error 
 
 		parentContainer, _ := daemon.Get(pe.ID())
 		if parentContainer != nil {
-			if err := parentContainer.UpdateNetwork(); err != nil {
+			if err := parentContainer.updateNetwork(); err != nil {
 				logrus.Debugf("Could not update network to remove link %s: %v", n, err)
 			}
 		}

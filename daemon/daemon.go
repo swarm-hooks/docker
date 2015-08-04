@@ -826,7 +826,7 @@ func (daemon *Daemon) Mount(container *Container) error {
 	return nil
 }
 
-func (daemon *Daemon) Unmount(container *Container) error {
+func (daemon *Daemon) unmount(container *Container) error {
 	daemon.driver.Put(container.ID)
 	return nil
 }

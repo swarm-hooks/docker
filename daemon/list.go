@@ -187,7 +187,7 @@ func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, 
 		}
 
 		if config.Size {
-			sizeRw, sizeRootFs := container.GetSize()
+			sizeRw, sizeRootFs := container.getSize()
 			newC.SizeRw = int(sizeRw)
 			newC.SizeRootFs = int(sizeRootFs)
 		}

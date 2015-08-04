@@ -30,14 +30,6 @@ func killProcessDirectly(container *Container) error {
 	return nil
 }
 
-func (container *Container) setupContainerDns() error {
-	return nil
-}
-
-func (container *Container) updateParentsHosts() error {
-	return nil
-}
-
 func (container *Container) setupLinkedContainers() ([]string, error) {
 	return nil, nil
 }
@@ -139,8 +131,8 @@ func populateCommand(c *Container, env []string) error {
 	return nil
 }
 
-// GetSize, return real size, virtual size
-func (container *Container) GetSize() (int64, int64) {
+// GetSize returns real size & virtual size
+func (container *Container) getSize() (int64, int64) {
 	// TODO Windows
 	return 0, 0
 }
@@ -158,22 +150,18 @@ func (container *Container) exportRw() (archive.Archive, error) {
 	return nil, nil
 }
 
-func (container *Container) UpdateNetwork() error {
+func (container *Container) updateNetwork() error {
 	return nil
 }
 
-func (container *Container) ReleaseNetwork() {
+func (container *Container) releaseNetwork() {
 }
 
-func (container *Container) RestoreNetwork() error {
+func (container *Container) unmountVolumes(forceSyscall bool) error {
 	return nil
 }
 
-func (container *Container) UnmountVolumes(forceSyscall bool) error {
-	return nil
-}
-
-// PrepareStorage
+// PrepareStorage prepares the layer to boot using the windows driver.
 func (container *Container) PrepareStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		// Get list of paths to parent layers.
@@ -197,7 +185,7 @@ func (container *Container) PrepareStorage() error {
 	return nil
 }
 
-// CleanupStorage
+// CleanupStorage unprepares the layer after shutdown? FIXME
 func (container *Container) CleanupStorage() error {
 	if wd, ok := container.daemon.driver.(*windows.WindowsGraphDriver); ok {
 		return hcsshim.UnprepareLayer(wd.Info(), container.ID)

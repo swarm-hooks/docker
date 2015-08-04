@@ -38,7 +38,7 @@ var (
 	ErrContainerRootfsReadonly = errors.New("container rootfs is marked read-only")
 )
 
-// ErrContainerNotRunning holds the id of the container that is not running. 
+// ErrContainerNotRunning holds the id of the container that is not running.
 type ErrContainerNotRunning struct {
 	id string
 }
@@ -339,7 +339,7 @@ func (container *Container) isNetworkAllocated() bool {
 // cleanup releases any network resources allocated to the container along with any rules
 // around how containers are linked together.  It also unmounts the container's root filesystem.
 func (container *Container) cleanup() {
-	container.ReleaseNetwork()
+	container.releaseNetwork()
 
 	if err := container.CleanupStorage(); err != nil {
 		logrus.Errorf("%v: Failed to cleanup storage: %v", container.ID, err)
@@ -353,7 +353,7 @@ func (container *Container) cleanup() {
 		container.daemon.unregisterExecCommand(eConfig)
 	}
 
-	container.UnmountVolumes(false)
+	container.unmountVolumes(false)
 }
 
 // KillSig sends the container the given signal. This wrapper for the
@@ -591,7 +591,7 @@ func (container *Container) GetImage() (*image.Image, error) {
 }
 
 func (container *Container) Unmount() error {
-	return container.daemon.Unmount(container)
+	return container.daemon.unmount(container)
 }
 
 func (container *Container) hostConfigPath() (string, error) {
@@ -634,7 +634,7 @@ func (container *Container) Copy(resource string) (rc io.ReadCloser, err error) 
 	defer func() {
 		if err != nil {
 			// unmount any volumes
-			container.UnmountVolumes(true)
+			container.unmountVolumes(true)
 			// unmount the container's rootfs
 			container.Unmount()
 		}
@@ -677,7 +677,7 @@ func (container *Container) Copy(resource string) (rc io.ReadCloser, err error) 
 	reader := ioutils.NewReadCloserWrapper(archive, func() error {
 		err := archive.Close()
 		container.CleanupStorage()
-		container.UnmountVolumes(true)
+		container.unmountVolumes(true)
 		container.Unmount()
 		container.Unlock()
 		return err

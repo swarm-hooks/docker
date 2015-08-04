@@ -326,7 +326,7 @@ func mergeDevices(defaultDevices, userDevices []*configs.Device) []*configs.Devi
 }
 
 // GetSize returns the real size & virtual size of the container.
-func (container *Container) GetSize() (int64, int64) {
+func (container *Container) getSize() (int64, int64) {
 	var (
 		sizeRw, sizeRootfs int64
 		err                error
@@ -655,7 +655,7 @@ func (container *Container) updateNetworkSettings(n libnetwork.Network, ep libne
 
 // UpdateNetwork is used to update the container's network (e.g. when linked containers
 // get removed/unlinked).
-func (container *Container) UpdateNetwork() error {
+func (container *Container) updateNetwork() error {
 	n, err := container.daemon.netController.NetworkByID(container.NetworkSettings.NetworkID)
 	if err != nil {
 		return fmt.Errorf("error locating network id %s: %v", container.NetworkSettings.NetworkID, err)
@@ -1032,7 +1032,7 @@ func (container *Container) getNetworkedContainer() (*Container, error) {
 	}
 }
 
-func (container *Container) ReleaseNetwork() {
+func (container *Container) releaseNetwork() {
 	if container.hostConfig.NetworkMode.IsContainer() || container.Config.NetworkDisabled {
 		return
 	}
@@ -1079,7 +1079,7 @@ func (container *Container) ReleaseNetwork() {
 	}
 }
 
-func (container *Container) UnmountVolumes(forceSyscall bool) error {
+func (container *Container) unmountVolumes(forceSyscall bool) error {
 	var volumeMounts []mountPoint
 
 	for _, mntPoint := range container.MountPoints {
