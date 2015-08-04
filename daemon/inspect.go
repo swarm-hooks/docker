@@ -33,7 +33,7 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 	// make a copy to play with
 	hostConfig := *container.hostConfig
 
-	if children, err := daemon.Children(container.Name); err == nil {
+	if children, err := daemon.children(container.Name); err == nil {
 		for linkAlias, child := range children {
 			hostConfig.Links = append(hostConfig.Links, fmt.Sprintf("%s:%s", child.Name, linkAlias))
 		}

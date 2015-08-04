@@ -517,8 +517,10 @@ func (daemon *Daemon) GetByName(name string) (*Container, error) {
 	return e, nil
 }
 
-//
-func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
+// Children returns all child containers of the given name. The
+// containers are returned as a map from the container name to a
+// pointer to Container.
+func (daemon *Daemon) children(name string) (map[string]*Container, error) {
 	name, err := GetFullContainerName(name)
 	if err != nil {
 		return nil, err
@@ -540,8 +542,9 @@ func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
 	return children, nil
 }
 
-// Parents
-func (daemon *Daemon) Parents(name string) ([]string, error) {
+// Parents returns the names of the parents containers of the given
+// named container.
+func (daemon *Daemon) parents(name string) ([]string, error) {
 	name, err := GetFullContainerName(name)
 	if err != nil {
 		return nil, err
@@ -560,7 +563,8 @@ func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error
 	return nil
 }
 
-// NewDaemon
+// NewDaemon sets up everything for the daemon to be able to service
+// requests from the webserver.
 func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemon, err error) {
 	setDefaultMtu(config)
 
@@ -831,15 +835,15 @@ func (daemon *Daemon) unmount(container *Container) error {
 	return nil
 }
 
-func (daemon *Daemon) Run(c *Container, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
+func (daemon *Daemon) run(c *Container, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
 	return daemon.execDriver.Run(c.command, pipes, startCallback)
 }
 
-func (daemon *Daemon) Kill(c *Container, sig int) error {
+func (daemon *Daemon) kill(c *Container, sig int) error {
 	return daemon.execDriver.Kill(c.command, sig)
 }
 
-func (daemon *Daemon) Stats(c *Container) (*execdriver.ResourceStats, error) {
+func (daemon *Daemon) stats(c *Container) (*execdriver.ResourceStats, error) {
 	return daemon.execDriver.Stats(c.ID)
 }
 
@@ -871,6 +875,7 @@ func (daemon *Daemon) Graph() *graph.Graph {
 	return daemon.graph
 }
 
+// Repositories returns all repositories.
 func (daemon *Daemon) Repositories() *graph.TagStore {
 	return daemon.repositories
 }

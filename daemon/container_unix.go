@@ -78,7 +78,7 @@ func (container *Container) setupLinkedContainers() ([]string, error) {
 		env    []string
 		daemon = container.daemon
 	)
-	children, err := daemon.Children(container.Name)
+	children, err := daemon.children(container.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +449,7 @@ func (container *Container) buildJoinOptions() ([]libnetwork.EndpointOption, err
 
 	var childEndpoints, parentEndpoints []string
 
-	children, err := container.daemon.Children(container.Name)
+	children, err := container.daemon.children(container.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -386,7 +386,7 @@ func (container *Container) KillSig(sig int) error {
 		return nil
 	}
 
-	if err := container.daemon.Kill(container, sig); err != nil {
+	if err := container.daemon.kill(container, sig); err != nil {
 		return err
 	}
 	container.logEvent("kill")
@@ -792,7 +792,7 @@ func (container *Container) GetMountLabel() string {
 }
 
 func (container *Container) Stats() (*execdriver.ResourceStats, error) {
-	return container.daemon.Stats(container)
+	return container.daemon.stats(container)
 }
 
 func (container *Container) LogDriverType() string {

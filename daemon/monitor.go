@@ -138,7 +138,7 @@ func (m *containerMonitor) Start() error {
 
 		m.lastStartTime = time.Now()
 
-		if exitStatus, err = m.container.daemon.Run(m.container, pipes, m.callback); err != nil {
+		if exitStatus, err = m.container.daemon.run(m.container, pipes, m.callback); err != nil {
 			// if we receive an internal error from the initial start of a container then lets
 			// return it instead of entering the restart loop
 			if m.container.RestartCount == 0 {
