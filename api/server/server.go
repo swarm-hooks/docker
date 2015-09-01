@@ -21,6 +21,9 @@ import (
 	"github.com/docker/docker/pkg/sockets"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/version"
+
+	"github.com/docker/docker/api/server/swagger/cmd/testServer"
+	"github.com/docker/docker/api/server/swagger/server"
 )
 
 // Config provides the configuration for the API server
@@ -411,6 +414,12 @@ func createRouter(s *Server) *mux.Router {
 			}
 		}
 	}
+
+	// Create a new Swagger server and give it the "TestServer" impl
+	// to support the backend stuff
+	srv := swserver.New(&swmain.TestServer{}, "swagger-ui/dist/")
+	r.Path("/vxx/{name:.*}").Methods("GET").Handler(srv)
+	r.Path("/containers/vxx/{name:.*}").Methods("GET").Handler(srv)
 
 	return r
 }
