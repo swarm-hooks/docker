@@ -33,10 +33,12 @@ func (*TestServer) Version() (*api.Version, error) {
 	}, nil
 }
 
-func (*TestServer) Create(p interface{}) (*api.ListContainerID, error) {
-	log.Infof("TestServer.Create(%v)", p)
-	var containerID *api.ListContainerID
-	return containerID, nil
+func (*TestServer) Create(containerID string, warnings []string) (*api.ContainerCreateResponse, error) {
+	log.Infof("TestServer.Create()")
+	return &api.ContainerCreateResponse{
+		ID:       containerID,
+		Warnings: warnings,
+	}, nil
 }
 
 func (*TestServer) Start(p string) (int, error) {

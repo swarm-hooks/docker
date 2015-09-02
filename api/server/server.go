@@ -420,6 +420,6 @@ func createRouter(s *Server) *mux.Router {
 	srv := swserver.New(&swmain.TestServer{}, "swagger-ui/dist/")
 	r.Path("/vxx/{name:.*}").Methods("GET").Handler(srv)
 	r.Path("/containers/vxx/{name:.*}").Methods("GET").Handler(srv)
-
+	r.Path("/containers/vxx/{name:.*}").Methods("POST").Handler(srv)
 	return r
 }

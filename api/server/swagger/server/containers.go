@@ -3,7 +3,10 @@ package swserver
 import (
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	api "github.com/docker/docker/api/server/swagger/api"
+	"github.com/docker/docker/daemon"
+	"github.com/docker/docker/runconfig"
 	"github.com/emicklei/go-restful"
 )
 
@@ -11,7 +14,8 @@ import (
 // forwarding requests to an underlying implementation.
 type containersServer struct {
 	*restful.WebService
-	impl api.ContainersService
+	impl   api.ContainersService
+	daemon *daemon.Daemon
 }
 
 func newContainersServer(impl api.ContainersService) *containersServer {
@@ -49,10 +53,10 @@ func (s *containersServer) installRoutes(ws *restful.WebService) {
 			Param(ws.QueryParameter("filters", "Filter containers").DataType("map[string][]string")).
 			Returns(200, "Container list", []*api.Container{}))
 	*/
-	// TODO - get these to list the correct return type
-	ws.Route(ws.POST("create").To(s.Create).
+	// TODO: Need to list all input types for a container config
+	ws.Route(ws.POST("/vxx/create").To(s.Create).
 		Doc("Create a container").
-		Returns(200, "Newly created container", nil))
+		Returns(200, "Newly created container ID", nil))
 
 	ws.Route(ws.POST("start").To(s.Start).
 		Doc("Start a container").
@@ -79,18 +83,31 @@ func (s *containersServer) List(request *restful.Request, response *restful.Resp
 }
 
 func (s *containersServer) Create(request *restful.Request, response *restful.Response) {
-	params := map[string]interface{}{
-		"Image":    "busybox",
-		"Hostname": "PoCHostname",
+	var (
+		warnings []string
+		name     = request.Request.Form.Get("name")
+	)
+
+	config, hostConfig, err := runconfig.DecodeContainerConfig(request.Request.Body)
+	if err != nil {
+		log.Infof("runconfig Error:%v", err)
+		return
 	}
 
-	containerID, err := s.impl.Create(params)
+	containerID, warnings, err := s.daemon.ContainerCreate(name, config, hostConfig)
+	if err != nil {
+		log.Infof("daemon Error:%v", err)
+		return
+	}
+
+	createResponse, err := s.impl.Create(containerID, warnings)
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 
-	response.WriteEntity(containerID)
+	response.WriteHeader(http.StatusCreated)
+	response.WriteEntity(createResponse)
 }
 
 func (s *containersServer) Start(request *restful.Request, response *restful.Response) {
