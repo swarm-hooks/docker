@@ -46,6 +46,7 @@ func (s *Server) newServer(proto, addr string) ([]serverCloser, error) {
 // AcceptConnections allows router to start listening for the incoming requests.
 func (s *Server) AcceptConnections(d *daemon.Daemon) {
 	s.daemon = d
+	s.impl = d
 	s.registerSubRouter()
 	// close the lock so the listeners start accepting connections
 	select {

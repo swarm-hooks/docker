@@ -43,7 +43,7 @@ func (s *Server) getVersion(version version.Version, w http.ResponseWriter, r *h
 }
 
 func (s *Server) getInfo(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-	info, err := s.daemon.SystemInfo()
+	info, err := s.impl.SystemInfo()
 	if err != nil {
 		return err
 	}
