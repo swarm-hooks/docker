@@ -66,7 +66,8 @@ func (s *Server) newServer(proto, addr string) ([]serverCloser, error) {
 func (s *Server) AcceptConnections(d *daemon.Daemon) {
 	// Tell the init daemon we are accepting requests
 	s.daemon = d
-	s.registerSubRouter()
+	s.impl = d
+	s.registerSubRouter(ctx)
 	go systemdDaemon.SdNotify("READY=1")
 	// close the lock so the listeners start accepting connections
 	select {

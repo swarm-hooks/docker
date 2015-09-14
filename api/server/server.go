@@ -18,7 +18,7 @@ import (
 	"github.com/docker/docker/context"
 	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/sockets"
-	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/xapi"
 	"github.com/docker/docker/utils"
 )
 
@@ -34,6 +34,7 @@ type Config struct {
 
 // Server contains instance details for the server
 type Server struct {
+	impl    xapi.Backend
 	daemon  *daemon.Daemon
 	cfg     *Config
 	router  *mux.Router
