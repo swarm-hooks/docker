@@ -22,6 +22,7 @@ import (
 	"github.com/docker/docker/pkg/sockets"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi"
 )
 
 // Config provides the configuration for the API server
@@ -36,6 +37,7 @@ type Config struct {
 
 // Server contains instance details for the server
 type Server struct {
+	impl    xapi.Backend
 	daemon  *daemon.Daemon
 	cfg     *Config
 	router  *mux.Router
