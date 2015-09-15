@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	Cli "github.com/docker/docker/cli"
 	flag "github.com/docker/docker/pkg/mflag"
 	"github.com/docker/docker/pkg/promise"

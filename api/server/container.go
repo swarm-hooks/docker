@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/websocket"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/signal"

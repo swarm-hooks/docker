@@ -2,7 +2,7 @@ package xapi
 
 import (
 	//"time"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // Backend is all the methods that need to be implemented to provide

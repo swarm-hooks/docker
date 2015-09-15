@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/docker/docker/api/client/ps"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/opts"
 	flag "github.com/docker/docker/pkg/mflag"

@@ -3,7 +3,7 @@ package ps
 import (
 	"io"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 const (

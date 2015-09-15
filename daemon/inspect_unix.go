@@ -2,7 +2,7 @@
 
 package daemon
 
-import "github.com/docker/docker/api/types"
+import "github.com/docker/docker/pkg/xapi/types"
 
 // This sets platform-specific fields
 func setPlatformSpecificContainerFields(container *Container, contJSONBase *types.ContainerJSONBase) *types.ContainerJSONBase {

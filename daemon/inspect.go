@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 func (daemon *Daemon) ContainerInspect(name string) (*types.ContainerJSON, error) {
