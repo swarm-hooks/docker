@@ -1,13 +1,14 @@
 // Package types is used for API stability in the types and response to the
-// consumers of the API stats endpoint.
+// consumers of the API stats endpoint. These are for the EXTERNALLY FACING HTTP conversion types.
 package types
 
 import (
 	"os"
 	"time"
 
-	"github.com/docker/docker/daemon/network" // needs to be moved here (network config struct)
 	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi/config"
+	//"github.com/docker/docker/pkg/xapi/types/exec"
 	"github.com/docker/docker/runconfig" // move to here or other package (container configuration)
 )
 
@@ -222,13 +223,14 @@ type ContainerState struct {
 
 // GET "/containers/{name:.*}/json"
 type ContainerJSONBase struct {
-	Id              string
-	Created         string
-	Path            string
-	Args            []string
-	State           *ContainerState
-	Image           string
-	NetworkSettings *network.Settings
+	Id      string
+	Created string
+	Path    string
+	Args    []string
+	State   *ContainerState
+	Image   string
+	// container config network settings
+	NetworkSettings *config.Settings
 	ResolvConfPath  string
 	HostnamePath    string
 	HostsPath       string

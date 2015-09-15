@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 func (s *Server) postAuth(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -16,7 +16,7 @@ func (s *Server) postAuth(version version.Version, w http.ResponseWriter, r *htt
 	if err != nil {
 		return err
 	}
-	status, err := s.daemon.RegistryService.Auth(config)
+	status, err := s.impl.RegistryService().Auth(config)
 	if err != nil {
 		return err
 	}

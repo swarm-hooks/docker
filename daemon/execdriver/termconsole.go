@@ -3,6 +3,8 @@ package execdriver
 import (
 	"io"
 	"os/exec"
+
+	exectypes "github.com/docker/docker/pkg/xapi/types/exec"
 )
 
 // StdConsole defines standard console operations for execdriver
@@ -10,7 +12,7 @@ type StdConsole struct {
 }
 
 // NewStdConsole returns a new StdConsole struct
-func NewStdConsole(processConfig *ProcessConfig, pipes *Pipes) (*StdConsole, error) {
+func NewStdConsole(processConfig *exectypes.ProcessConfig, pipes *exectypes.Pipes) (*StdConsole, error) {
 	std := &StdConsole{}
 
 	if err := std.AttachPipes(&processConfig.Cmd, pipes); err != nil {
@@ -20,7 +22,7 @@ func NewStdConsole(processConfig *ProcessConfig, pipes *Pipes) (*StdConsole, err
 }
 
 // AttachPipes attaches given pipes to exec.Cmd
-func (s *StdConsole) AttachPipes(command *exec.Cmd, pipes *Pipes) error {
+func (s *StdConsole) AttachPipes(command *exec.Cmd, pipes *exectypes.Pipes) error {
 	command.Stdout = pipes.Stdout
 	command.Stderr = pipes.Stderr
 

@@ -15,6 +15,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
+	exectypes "github.com/docker/docker/pkg/xapi/types/exec"
+
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/reexec"
@@ -131,11 +133,11 @@ type execOutput struct {
 
 // Run implements the exec driver Driver interface,
 // it calls libcontainer APIs to run a container.
-func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
+func (d *Driver) Run(c *exectypes.Command, pipes *exectypes.Pipes, startCallback execdriver.StartCallback) (exectypes.ExitStatus, error) {
 	// take the Command and populate the libcontainer.Config from it
 	container, err := d.createContainer(c)
 	if err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	p := &libcontainer.Process{
@@ -146,12 +148,12 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	}
 
 	if err := setupPipes(container, &c.ProcessConfig, p, pipes); err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	cont, err := d.factory.Create(c.ID, container)
 	if err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 	d.Lock()
 	d.activeContainers[c.ID] = cont
@@ -162,7 +164,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	}()
 
 	if err := cont.Start(p); err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	if startCallback != nil {
@@ -170,7 +172,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 		if err != nil {
 			p.Signal(os.Kill)
 			p.Wait()
-			return execdriver.ExitStatus{ExitCode: -1}, err
+			return exectypes.ExitStatus{ExitCode: -1}, err
 		}
 		startCallback(&c.ProcessConfig, pid)
 	}
@@ -186,13 +188,13 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	if err != nil {
 		execErr, ok := err.(*exec.ExitError)
 		if !ok {
-			return execdriver.ExitStatus{ExitCode: -1}, err
+			return exectypes.ExitStatus{ExitCode: -1}, err
 		}
 		ps = execErr.ProcessState
 	}
 	cont.Destroy()
 	_, oomKill := <-oom
-	return execdriver.ExitStatus{ExitCode: utils.ExitStatus(ps.Sys().(syscall.WaitStatus)), OOMKilled: oomKill}, nil
+	return exectypes.ExitStatus{ExitCode: utils.ExitStatus(ps.Sys().(syscall.WaitStatus)), OOMKilled: oomKill}, nil
 }
 
 // notifyOnOOM returns a channel that signals if the container received an OOM notification
@@ -260,7 +262,7 @@ func waitInPIDHost(p *libcontainer.Process, c libcontainer.Container) func() (*o
 }
 
 // Kill implements the exec driver Driver interface.
-func (d *Driver) Kill(c *execdriver.Command, sig int) error {
+func (d *Driver) Kill(c *exectypes.Command, sig int) error {
 	d.Lock()
 	active := d.activeContainers[c.ID]
 	d.Unlock()
@@ -276,7 +278,7 @@ func (d *Driver) Kill(c *execdriver.Command, sig int) error {
 
 // Pause implements the exec driver Driver interface,
 // it calls libcontainer API to pause a container.
-func (d *Driver) Pause(c *execdriver.Command) error {
+func (d *Driver) Pause(c *exectypes.Command) error {
 	d.Lock()
 	active := d.activeContainers[c.ID]
 	d.Unlock()
@@ -288,7 +290,7 @@ func (d *Driver) Pause(c *execdriver.Command) error {
 
 // Unpause implements the exec driver Driver interface,
 // it calls libcontainer API to unpause a container.
-func (d *Driver) Unpause(c *execdriver.Command) error {
+func (d *Driver) Unpause(c *exectypes.Command) error {
 	d.Lock()
 	active := d.activeContainers[c.ID]
 	d.Unlock()
@@ -299,7 +301,7 @@ func (d *Driver) Unpause(c *execdriver.Command) error {
 }
 
 // Terminate implements the exec driver Driver interface.
-func (d *Driver) Terminate(c *execdriver.Command) error {
+func (d *Driver) Terminate(c *exectypes.Command) error {
 	defer d.cleanContainer(c.ID)
 	container, err := d.factory.Load(c.ID)
 	if err != nil {
@@ -364,7 +366,7 @@ func (d *Driver) Clean(id string) error {
 }
 
 // Stats implements the exec driver Driver interface.
-func (d *Driver) Stats(id string) (*execdriver.ResourceStats, error) {
+func (d *Driver) Stats(id string) (*exectypes.ResourceStats, error) {
 	d.Lock()
 	c := d.activeContainers[id]
 	d.Unlock()
@@ -382,7 +384,7 @@ func (d *Driver) Stats(id string) (*execdriver.ResourceStats, error) {
 	if memoryLimit == 0 {
 		memoryLimit = d.machineMemory
 	}
-	return &execdriver.ResourceStats{
+	return &exectypes.ResourceStats{
 		Stats:       stats,
 		Read:        now,
 		MemoryLimit: memoryLimit,
@@ -395,7 +397,7 @@ type TtyConsole struct {
 }
 
 // NewTtyConsole returns a new TtyConsole struct.
-func NewTtyConsole(console libcontainer.Console, pipes *execdriver.Pipes) (*TtyConsole, error) {
+func NewTtyConsole(console libcontainer.Console, pipes *exectypes.Pipes) (*TtyConsole, error) {
 	tty := &TtyConsole{
 		console: console,
 	}
@@ -414,7 +416,7 @@ func (t *TtyConsole) Resize(h, w int) error {
 }
 
 // AttachPipes attaches given pipes to TtyConsole
-func (t *TtyConsole) AttachPipes(pipes *execdriver.Pipes) error {
+func (t *TtyConsole) AttachPipes(pipes *exectypes.Pipes) error {
 	go func() {
 		if wb, ok := pipes.Stdout.(interface {
 			CloseWriters() error
@@ -441,8 +443,8 @@ func (t *TtyConsole) Close() error {
 	return t.console.Close()
 }
 
-func setupPipes(container *configs.Config, processConfig *execdriver.ProcessConfig, p *libcontainer.Process, pipes *execdriver.Pipes) error {
-	var term execdriver.Terminal
+func setupPipes(container *configs.Config, processConfig *exectypes.ProcessConfig, p *libcontainer.Process, pipes *exectypes.Pipes) error {
+	var term exectypes.Terminal
 	var err error
 
 	if processConfig.Tty {

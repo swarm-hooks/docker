@@ -14,30 +14,9 @@ import (
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/xapi/config"
 	"github.com/docker/docker/runconfig"
 )
-
-type execConfig struct {
-	sync.Mutex
-	ID            string
-	Running       bool
-	ExitCode      int
-	ProcessConfig *execdriver.ProcessConfig
-	StreamConfig
-	OpenStdin  bool
-	OpenStderr bool
-	OpenStdout bool
-	Container  *Container
-	canRemove  bool
-
-	// waitStart will be closed immediately after the exec is really started.
-	waitStart chan struct{}
-}
-
-type execStore struct {
-	s map[string]*execConfig
-	sync.RWMutex
-}
 
 func newExecStore() *execStore {
 	return &execStore{s: make(map[string]*execConfig, 0)}

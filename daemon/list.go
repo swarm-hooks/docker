@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/pkg/graphdb"
 	"github.com/docker/docker/pkg/nat"
 	"github.com/docker/docker/pkg/parsers/filters"
+	"github.com/docker/docker/pkg/xapi/types"
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
 // List returns an array of all containers registered in the daemon.
@@ -17,16 +18,7 @@ func (daemon *Daemon) List() []*Container {
 	return daemon.containers.List()
 }
 
-type ContainersConfig struct {
-	All     bool
-	Since   string
-	Before  string
-	Limit   int
-	Size    bool
-	Filters string
-}
-
-func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, error) {
+func (daemon *Daemon) Containers(config *config.ContainersConfig) ([]*types.Container, error) {
 	var (
 		foundBefore bool
 		displayed   int

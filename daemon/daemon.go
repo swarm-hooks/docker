@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/daemon/graphdriver"
 	_ "github.com/docker/docker/daemon/graphdriver/vfs"
 	"github.com/docker/docker/daemon/logger"
-	"github.com/docker/docker/daemon/network"
 	"github.com/docker/docker/graph"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/broadcastwriter"
@@ -34,6 +33,7 @@ import (
 	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/truncindex"
 	"github.com/docker/docker/pkg/xapi"
+	"github.com/docker/docker/pkg/xapi/config"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/trust"
@@ -99,10 +99,16 @@ type Daemon struct {
 	execDriver       execdriver.Driver
 	statsCollector   *statsCollector
 	defaultLogConfig runconfig.LogConfig
-	RegistryService  *registry.Service
+	registryService  *registry.Service
 	EventsService    *events.Events
 	netController    libnetwork.NetworkController
 	root             string
+}
+
+// RegistryService returns the registry service for the daemon (mostly
+// used to access the config inside of it, sigh)
+func (daemon *Daemon) RegistryService() *registry.Service {
+	return daemon.registryService
 }
 
 // Get looks for a container using the provided information, which could be
@@ -731,7 +737,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 	d.execDriver = ed
 	d.statsCollector = newStatsCollector(1 * time.Second)
 	d.defaultLogConfig = config.LogConfig
-	d.RegistryService = registryService
+	d.registryService = registryService
 	d.EventsService = eventsService
 	d.root = config.Root
 	go d.execCommandGC()

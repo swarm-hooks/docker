@@ -19,16 +19,17 @@ import (
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/daemon/logger/jsonfilelog"
-	"github.com/docker/docker/daemon/network"
+
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/docker/docker/pkg/broadcastwriter"
+
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/docker/pkg/nat"
 	"github.com/docker/docker/pkg/promise"
 	"github.com/docker/docker/pkg/symlink"
+
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/volume"
 )
@@ -47,46 +48,6 @@ type ErrContainerNotRunning struct {
 
 func (e ErrContainerNotRunning) Error() string {
 	return fmt.Sprintf("Container %s is not running", e.id)
-}
-
-type StreamConfig struct {
-	stdout    *broadcastwriter.BroadcastWriter
-	stderr    *broadcastwriter.BroadcastWriter
-	stdin     io.ReadCloser
-	stdinPipe io.WriteCloser
-}
-
-// CommonContainer holds the settings for a container which are applicable
-// across all platforms supported by the daemon.
-type CommonContainer struct {
-	StreamConfig
-
-	*State `json:"State"` // Needed for remote api version <= 1.11
-	root   string         // Path to the "home" of the container, including metadata.
-	basefs string         // Path to the graphdriver mountpoint
-
-	ID                       string
-	Created                  time.Time
-	Path                     string
-	Args                     []string
-	Config                   *runconfig.Config
-	ImageID                  string `json:"Image"`
-	NetworkSettings          *network.Settings
-	LogPath                  string
-	Name                     string
-	Driver                   string
-	ExecDriver               string
-	MountLabel, ProcessLabel string
-	RestartCount             int
-	HasBeenStartedBefore     bool
-	hostConfig               *runconfig.HostConfig
-	command                  *execdriver.Command
-	monitor                  *containerMonitor
-	execCommands             *execStore
-	daemon                   *Daemon
-	// logDriver for closing
-	logDriver logger.Logger
-	logCopier *logger.Copier
 }
 
 func (container *Container) FromDisk() error {

@@ -15,7 +15,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/autogen/dockerversion"
-	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/sockets"
 	"github.com/docker/docker/pkg/version"
 	"github.com/docker/docker/pkg/xapi"
@@ -34,7 +33,6 @@ type Config struct {
 // Server contains instance details for the server
 type Server struct {
 	impl    xapi.Backend
-	daemon  *daemon.Daemon
 	cfg     *Config
 	router  *mux.Router
 	start   chan struct{}

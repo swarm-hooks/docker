@@ -2,25 +2,15 @@ package daemon
 
 import (
 	"fmt"
-	"io"
 	"strconv"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
-type ContainerLogsConfig struct {
-	Follow, Timestamps   bool
-	Tail                 string
-	Since                time.Time
-	UseStdout, UseStderr bool
-	OutStream            io.Writer
-	Stop                 <-chan bool
-}
-
-func (daemon *Daemon) ContainerLogs(container *Container, config *ContainerLogsConfig) error {
+func (daemon *Daemon) ContainerLogs(container *Container, config *config.ContainerLogsConfig) error {
 	if !(config.UseStdout || config.UseStderr) {
 		return fmt.Errorf("You must choose at least one stream")
 	}

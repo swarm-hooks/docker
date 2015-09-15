@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/docker/docker/pkg/xapi/config"
+
 	"github.com/Graylog2/go-gelf/gelf"
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/logger"
@@ -48,7 +50,7 @@ func init() {
 // New creates a gelf logger using the configuration passed in on the
 // context. Supported context configuration variables are
 // gelf-address, & gelf-tag.
-func New(ctx logger.Context) (logger.Logger, error) {
+func New(ctx logger.Context) (config.Logger, error) {
 	// parse gelf address
 	address, err := parseAddress(ctx.Config["gelf-address"])
 	if err != nil {
@@ -88,7 +90,7 @@ func New(ctx logger.Context) (logger.Logger, error) {
 	}, nil
 }
 
-func (s *gelfLogger) Log(msg *logger.Message) error {
+func (s *gelfLogger) Log(msg *config.Message) error {
 	// remove trailing and leading whitespace
 	short := bytes.TrimSpace([]byte(msg.Line))
 

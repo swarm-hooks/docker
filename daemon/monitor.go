@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/xapi/config"
 	"github.com/docker/docker/runconfig"
 )
 
@@ -16,44 +17,6 @@ const (
 	defaultTimeIncrement = 100
 	loggerCloseTimeout   = 10 * time.Second
 )
-
-// containerMonitor monitors the execution of a container's main process.
-// If a restart policy is specified for the container the monitor will ensure that the
-// process is restarted based on the rules of the policy.  When the container is finally stopped
-// the monitor will reset and cleanup any of the container resources such as networking allocations
-// and the rootfs
-type containerMonitor struct {
-	mux sync.Mutex
-
-	// container is the container being monitored
-	container *Container
-
-	// restartPolicy is the current policy being applied to the container monitor
-	restartPolicy runconfig.RestartPolicy
-
-	// failureCount is the number of times the container has failed to
-	// start in a row
-	failureCount int
-
-	// shouldStop signals the monitor that the next time the container exits it is
-	// either because docker or the user asked for the container to be stopped
-	shouldStop bool
-
-	// startSignal is a channel that is closes after the container initially starts
-	startSignal chan struct{}
-
-	// stopChan is used to signal to the monitor whenever there is a wait for the
-	// next restart so that the timeIncrement is not honored and the user is not
-	// left waiting for nothing to happen during this time
-	stopChan chan struct{}
-
-	// timeIncrement is the amount of time to wait between restarts
-	// this is in milliseconds
-	timeIncrement int
-
-	// lastStartTime is the time which the monitor last exec'd the container's process
-	lastStartTime time.Time
-}
 
 // newContainerMonitor returns an initialized containerMonitor for the provided container
 // honoring the provided restart policy

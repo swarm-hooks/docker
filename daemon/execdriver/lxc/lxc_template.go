@@ -10,6 +10,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
+	exectypes "github.com/docker/docker/pkg/xapi/types/exec" // this probably broke a bunch of stuff with that template
+
 	nativeTemplate "github.com/docker/docker/daemon/execdriver/native/template"
 	"github.com/docker/docker/pkg/stringutils"
 	"github.com/opencontainers/runc/libcontainer/label"
@@ -215,7 +217,7 @@ func isDirectory(source string) string {
 	return "file"
 }
 
-func getMemorySwap(v *execdriver.Resources) int64 {
+func getMemorySwap(v *exectypes.Resources) int64 {
 	// By default, MemorySwap is set to twice the size of RAM.
 	// If you want to omit MemorySwap, set it to `-1'.
 	if v.MemorySwap < 0 {

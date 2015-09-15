@@ -2,21 +2,15 @@ package daemon
 
 import (
 	"encoding/json"
-	"io"
 
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/daemon/execdriver"
+	"github.com/docker/docker/pkg/xapi/config"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/libnetwork/sandbox"
 	"github.com/opencontainers/runc/libcontainer"
 )
 
-type ContainerStatsConfig struct {
-	Stream    bool
-	OutStream io.Writer
-	Stop      <-chan bool
-}
-
-func (daemon *Daemon) ContainerStats(name string, config *ContainerStatsConfig) error {
+func (daemon *Daemon) ContainerStats(name string, config *config.ContainerStatsConfig) error {
 	updates, err := daemon.SubscribeToContainerStats(name)
 	if err != nil {
 		return err

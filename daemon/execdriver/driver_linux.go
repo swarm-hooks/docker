@@ -13,12 +13,14 @@ import (
 	"github.com/opencontainers/runc/libcontainer"
 	"github.com/opencontainers/runc/libcontainer/cgroups/fs"
 	"github.com/opencontainers/runc/libcontainer/configs"
+
+	exec "github.com/docker/docker/pkg/xapi/types/exec"
 )
 
 // InitContainer is the initialization of a container config.
 // It returns the initial configs for a container. It's mostly
 // defined by the default template.
-func InitContainer(c *Command) *configs.Config {
+func InitContainer(c *exec.Command) *configs.Config {
 	container := template.New()
 
 	container.Hostname = getEnv("HOSTNAME", c.ProcessConfig.Env)
@@ -50,7 +52,7 @@ func getEnv(key string, env []string) string {
 }
 
 // SetupCgroups setups cgroup resources for a container.
-func SetupCgroups(container *configs.Config, c *Command) error {
+func SetupCgroups(container *configs.Config, c *exec.Command) error {
 	if c.Resources != nil {
 		container.Cgroups.CpuShares = c.Resources.CPUShares
 		container.Cgroups.Memory = c.Resources.Memory
@@ -114,7 +116,7 @@ func readSysfsNetworkStats(ethInterface, statsFile string) (uint64, error) {
 }
 
 // Stats collects all the resource usage information from a container.
-func Stats(containerDir string, containerMemoryLimit int64, machineMemory int64) (*ResourceStats, error) {
+func Stats(containerDir string, containerMemoryLimit int64, machineMemory int64) (*exec.ResourceStats, error) {
 	f, err := os.Open(filepath.Join(containerDir, "state.json"))
 	if err != nil {
 		return nil, err
@@ -158,7 +160,7 @@ func Stats(containerDir string, containerMemoryLimit int64, machineMemory int64)
 			stats.Interfaces = append(stats.Interfaces, istats)
 		}
 	}
-	return &ResourceStats{
+	return &exec.ResourceStats{
 		Stats:       stats,
 		Read:        now,
 		MemoryLimit: memoryLimit,

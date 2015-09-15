@@ -7,9 +7,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/version"
 	"github.com/docker/docker/runconfig"
+	"github.com/docker/pkg/xapi"
 )
 
 // NewServer sets up the required Server and does protocol specific checking.
@@ -44,8 +44,7 @@ func (s *Server) newServer(proto, addr string) ([]serverCloser, error) {
 }
 
 // AcceptConnections allows router to start listening for the incoming requests.
-func (s *Server) AcceptConnections(d *daemon.Daemon) {
-	s.daemon = d
+func (s *Server) AcceptConnections(d Backend) {
 	s.impl = d
 	s.registerSubRouter()
 	// close the lock so the listeners start accepting connections

@@ -23,6 +23,8 @@ import (
 	"github.com/docker/docker/pkg/tailfile"
 	"github.com/docker/docker/pkg/timeutils"
 	"github.com/docker/docker/pkg/units"
+
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
 const (
@@ -54,7 +56,7 @@ func init() {
 
 // New creates new JSONFileLogger which writes to filename passed in
 // on given context.
-func New(ctx logger.Context) (logger.Logger, error) {
+func New(ctx logger.Context) (config.Logger, error) {
 	log, err := os.OpenFile(ctx.LogPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
@@ -89,7 +91,7 @@ func New(ctx logger.Context) (logger.Logger, error) {
 }
 
 // Log converts logger.Message to jsonlog.JSONLog and serializes it to file.
-func (l *JSONFileLogger) Log(msg *logger.Message) error {
+func (l *JSONFileLogger) Log(msg *config.Message) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -210,12 +212,12 @@ func (l *JSONFileLogger) Name() string {
 	return Name
 }
 
-func decodeLogLine(dec *json.Decoder, l *jsonlog.JSONLog) (*logger.Message, error) {
+func decodeLogLine(dec *json.Decoder, l *jsonlog.JSONLog) (*config.Message, error) {
 	l.Reset()
 	if err := dec.Decode(l); err != nil {
 		return nil, err
 	}
-	msg := &logger.Message{
+	msg := &config.Message{
 		Source:    l.Stream,
 		Timestamp: l.Created,
 		Line:      []byte(l.Log),

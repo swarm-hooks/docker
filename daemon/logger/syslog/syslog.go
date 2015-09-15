@@ -17,6 +17,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/pkg/urlutil"
+
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
 const name = "syslog"
@@ -60,7 +62,7 @@ func init() {
 // New creates a syslog logger using the configuration passed in on
 // the context. Supported context configuration variables are
 // syslog-address, syslog-facility, & syslog-tag.
-func New(ctx logger.Context) (logger.Logger, error) {
+func New(ctx logger.Context) (config.Logger, error) {
 	tag := ctx.Config["syslog-tag"]
 	if tag == "" {
 		tag = ctx.ContainerID[:12]
@@ -91,7 +93,7 @@ func New(ctx logger.Context) (logger.Logger, error) {
 	}, nil
 }
 
-func (s *syslogger) Log(msg *logger.Message) error {
+func (s *syslogger) Log(msg *config.Message) error {
 	if msg.Source == "stderr" {
 		return s.writer.Err(string(msg.Line))
 	}

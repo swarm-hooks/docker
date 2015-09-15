@@ -19,8 +19,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
+	exectypes "github.com/docker/docker/pkg/xapi/types/exec"
+
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/stringutils"
 	sysinfo "github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/term"
@@ -125,20 +127,20 @@ func killNetNsProc(proc *os.Process) {
 
 // Run implements the exec driver Driver interface,
 // it calls 'exec.Cmd' to launch lxc commands to run a container.
-func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
+func (d *Driver) Run(c *exectypes.Command, pipes *exectypes.Pipes, startCallback execdriver.StartCallback) (exectypes.ExitStatus, error) {
 	var (
-		term     execdriver.Terminal
+		term     exectypes.Terminal
 		err      error
 		dataPath = d.containerDir(c.ID)
 	)
 
 	if c.Network == nil || (c.Network.NamespacePath == "" && c.Network.ContainerID == "") {
-		return execdriver.ExitStatus{ExitCode: -1}, fmt.Errorf("empty namespace path for non-container network")
+		return exectypes.ExitStatus{ExitCode: -1}, fmt.Errorf("empty namespace path for non-container network")
 	}
 
 	container, err := d.createContainer(c)
 	if err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	if c.ProcessConfig.Tty {
@@ -147,7 +149,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 		term, err = execdriver.NewStdConsole(&c.ProcessConfig, pipes)
 	}
 	if err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 	c.ProcessConfig.Terminal = term
 
@@ -158,7 +160,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	}
 	d.Unlock()
 
-	c.Mounts = append(c.Mounts, execdriver.Mount{
+	c.Mounts = append(c.Mounts, exectypes.Mount{
 		Source:      d.initPath,
 		Destination: c.InitPath,
 		Writable:    false,
@@ -166,11 +168,11 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	})
 
 	if err := d.generateEnvConfig(c); err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 	configPath, err := d.generateLXCConfig(c)
 	if err != nil {
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 	params := []string{
 		"lxc-start",
@@ -193,7 +195,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 	} else {
 		proc, err = setupNetNs(c.Network.NamespacePath)
 		if err != nil {
-			return execdriver.ExitStatus{ExitCode: -1}, err
+			return exectypes.ExitStatus{ExitCode: -1}, err
 		}
 
 		pidStr := fmt.Sprintf("%d", proc.Pid)
@@ -265,12 +267,12 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 
 	if err := createDeviceNodes(c.Rootfs, c.AutoCreatedDevices); err != nil {
 		killNetNsProc(proc)
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	if err := c.ProcessConfig.Start(); err != nil {
 		killNetNsProc(proc)
-		return execdriver.ExitStatus{ExitCode: -1}, err
+		return exectypes.ExitStatus{ExitCode: -1}, err
 	}
 
 	var (
@@ -287,12 +289,12 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 		close(waitLock)
 	}()
 
-	terminate := func(terr error) (execdriver.ExitStatus, error) {
+	terminate := func(terr error) (exectypes.ExitStatus, error) {
 		if c.ProcessConfig.Process != nil {
 			c.ProcessConfig.Process.Kill()
 			c.ProcessConfig.Wait()
 		}
-		return execdriver.ExitStatus{ExitCode: -1}, terr
+		return exectypes.ExitStatus{ExitCode: -1}, terr
 	}
 	// Poll lxc for RUNNING status
 	pid, err := d.waitForStart(c, waitLock)
@@ -347,7 +349,7 @@ func (d *Driver) Run(c *execdriver.Command, pipes *execdriver.Pipes, startCallba
 		exitCode = 137
 	}
 
-	return execdriver.ExitStatus{ExitCode: exitCode, OOMKilled: oomKill}, waitErr
+	return exectypes.ExitStatus{ExitCode: exitCode, OOMKilled: oomKill}, waitErr
 }
 
 // copy from libcontainer
@@ -399,8 +401,8 @@ func notifyOnOOM(paths map[string]string) (<-chan struct{}, error) {
 }
 
 // createContainer populates and configures the container type with the
-// data provided by the execdriver.Command
-func (d *Driver) createContainer(c *execdriver.Command) (*configs.Config, error) {
+// data provided by the exectypes.Command
+func (d *Driver) createContainer(c *exectypes.Command) (*configs.Config, error) {
 	container := execdriver.InitContainer(c)
 	if err := execdriver.SetupCgroups(container, c); err != nil {
 		return nil, err
@@ -516,7 +518,7 @@ func setupUser(userSpec string) error {
 
 // getExitCode returns the exit code of the process.
 // If the process has not exited -1 will be returned.
-func getExitCode(c *execdriver.Command) int {
+func getExitCode(c *exectypes.Command) int {
 	if c.ProcessConfig.ProcessState == nil {
 		return -1
 	}
@@ -524,7 +526,7 @@ func getExitCode(c *execdriver.Command) int {
 }
 
 // Kill implements the exec driver Driver interface.
-func (d *Driver) Kill(c *execdriver.Command, sig int) error {
+func (d *Driver) Kill(c *exectypes.Command, sig int) error {
 	if sig == 9 || c.ProcessConfig.Process == nil {
 		return killLxc(c.ID, sig)
 	}
@@ -534,7 +536,7 @@ func (d *Driver) Kill(c *execdriver.Command, sig int) error {
 
 // Pause implements the exec driver Driver interface,
 // it executes lxc-freeze to pause a container.
-func (d *Driver) Pause(c *execdriver.Command) error {
+func (d *Driver) Pause(c *exectypes.Command) error {
 	_, err := exec.LookPath("lxc-freeze")
 	if err == nil {
 		output, errExec := exec.Command("lxc-freeze", "-n", c.ID).CombinedOutput()
@@ -548,7 +550,7 @@ func (d *Driver) Pause(c *execdriver.Command) error {
 
 // Unpause implements the exec driver Driver interface,
 // it executes lxc-unfreeze to unpause a container.
-func (d *Driver) Unpause(c *execdriver.Command) error {
+func (d *Driver) Unpause(c *exectypes.Command) error {
 	_, err := exec.LookPath("lxc-unfreeze")
 	if err == nil {
 		output, errExec := exec.Command("lxc-unfreeze", "-n", c.ID).CombinedOutput()
@@ -561,7 +563,7 @@ func (d *Driver) Unpause(c *execdriver.Command) error {
 }
 
 // Terminate implements the exec driver Driver interface.
-func (d *Driver) Terminate(c *execdriver.Command) error {
+func (d *Driver) Terminate(c *exectypes.Command) error {
 	return killLxc(c.ID, 9)
 }
 
@@ -604,7 +606,7 @@ func killLxc(id string, sig int) error {
 }
 
 // wait for the process to start and return the pid for the process
-func (d *Driver) waitForStart(c *execdriver.Command, waitLock chan struct{}) (int, error) {
+func (d *Driver) waitForStart(c *exectypes.Command, waitLock chan struct{}) (int, error) {
 	var (
 		err    error
 		output []byte
@@ -750,7 +752,7 @@ func (d *Driver) containerDir(containerID string) string {
 	return path.Join(d.libPath, "containers", containerID)
 }
 
-func (d *Driver) generateLXCConfig(c *execdriver.Command) (string, error) {
+func (d *Driver) generateLXCConfig(c *exectypes.Command) (string, error) {
 	root := path.Join(d.containerDir(c.ID), "config.lxc")
 
 	fo, err := os.Create(root)
@@ -760,7 +762,7 @@ func (d *Driver) generateLXCConfig(c *execdriver.Command) (string, error) {
 	defer fo.Close()
 
 	if err := lxcTemplateCompiled.Execute(fo, struct {
-		*execdriver.Command
+		*exectypes.Command
 		AppArmor bool
 	}{
 		Command:  c,
@@ -772,13 +774,13 @@ func (d *Driver) generateLXCConfig(c *execdriver.Command) (string, error) {
 	return root, nil
 }
 
-func (d *Driver) generateEnvConfig(c *execdriver.Command) error {
+func (d *Driver) generateEnvConfig(c *exectypes.Command) error {
 	data, err := json.Marshal(c.ProcessConfig.Env)
 	if err != nil {
 		return err
 	}
 	p := path.Join(d.libPath, "containers", c.ID, "config.env")
-	c.Mounts = append(c.Mounts, execdriver.Mount{
+	c.Mounts = append(c.Mounts, exectypes.Mount{
 		Source:      p,
 		Destination: "/.dockerenv",
 		Writable:    false,
@@ -803,7 +805,7 @@ type TtyConsole struct {
 
 // NewTtyConsole returns a new TtyConsole struct.
 // Wired up to the provided process config and stdin/stdout/stderr pipes.
-func NewTtyConsole(processConfig *execdriver.ProcessConfig, pipes *execdriver.Pipes) (*TtyConsole, error) {
+func NewTtyConsole(processConfig *exectypes.ProcessConfig, pipes *exectypes.Pipes) (*TtyConsole, error) {
 	// lxc is special in that we cannot create the master outside of the container without
 	// opening the slave because we have nothing to provide to the cmd.  We have to open both then do
 	// the crazy setup on command right now instead of passing the console path to lxc and telling it
@@ -835,7 +837,7 @@ func (t *TtyConsole) Resize(h, w int) error {
 }
 
 // AttachPipes attaches given pipes to exec.Cmd
-func (t *TtyConsole) AttachPipes(command *exec.Cmd, pipes *execdriver.Pipes) error {
+func (t *TtyConsole) AttachPipes(command *exec.Cmd, pipes *exectypes.Pipes) error {
 	command.Stdout = t.SlavePty
 	command.Stderr = t.SlavePty
 
@@ -870,14 +872,14 @@ func (t *TtyConsole) Close() error {
 
 // Exec implements the exec driver Driver interface,
 // it is not implemented by lxc.
-func (d *Driver) Exec(c *execdriver.Command, processConfig *execdriver.ProcessConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
+func (d *Driver) Exec(c *exectypes.Command, processConfig *exectypes.ProcessConfig, pipes *exectypes.Pipes, startCallback execdriver.StartCallback) (int, error) {
 	return -1, ErrExec
 }
 
 // Stats implements the exec driver Driver interface.
 // Lxc doesn't implement it's own Stats, it does some trick by implementing
 // execdriver.Stats to get stats info by libcontainer APIs.
-func (d *Driver) Stats(id string) (*execdriver.ResourceStats, error) {
+func (d *Driver) Stats(id string) (*exectypes.ResourceStats, error) {
 	if _, ok := d.activeContainers[id]; !ok {
 		return nil, fmt.Errorf("%s is not a key in active containers", id)
 	}

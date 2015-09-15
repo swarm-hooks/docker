@@ -10,6 +10,9 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/daemon/execdriver"
+
+	exectypes "github.com/docker/docker/pkg/xapi/types/exec"
+
 	"github.com/opencontainers/runc/libcontainer/apparmor"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
@@ -17,8 +20,8 @@ import (
 )
 
 // createContainer populates and configures the container type with the
-// data provided by the execdriver.Command
-func (d *Driver) createContainer(c *execdriver.Command) (*configs.Config, error) {
+// data provided by the exectypes.Command
+func (d *Driver) createContainer(c *exectypes.Command) (*configs.Config, error) {
 	container := execdriver.InitContainer(c)
 
 	if err := d.createIpc(container, c); err != nil {
@@ -113,7 +116,7 @@ func generateIfaceName() (string, error) {
 	return "", errors.New("Failed to find name for new interface")
 }
 
-func (d *Driver) createNetwork(container *configs.Config, c *execdriver.Command) error {
+func (d *Driver) createNetwork(container *configs.Config, c *exectypes.Command) error {
 	if c.Network == nil {
 		return nil
 	}
@@ -143,7 +146,7 @@ func (d *Driver) createNetwork(container *configs.Config, c *execdriver.Command)
 	return nil
 }
 
-func (d *Driver) createIpc(container *configs.Config, c *execdriver.Command) error {
+func (d *Driver) createIpc(container *configs.Config, c *exectypes.Command) error {
 	if c.Ipc.HostIpc {
 		container.Namespaces.Remove(configs.NEWIPC)
 		return nil
@@ -168,7 +171,7 @@ func (d *Driver) createIpc(container *configs.Config, c *execdriver.Command) err
 	return nil
 }
 
-func (d *Driver) createPid(container *configs.Config, c *execdriver.Command) error {
+func (d *Driver) createPid(container *configs.Config, c *exectypes.Command) error {
 	if c.Pid.HostPid {
 		container.Namespaces.Remove(configs.NEWPID)
 		return nil
@@ -177,7 +180,7 @@ func (d *Driver) createPid(container *configs.Config, c *execdriver.Command) err
 	return nil
 }
 
-func (d *Driver) createUTS(container *configs.Config, c *execdriver.Command) error {
+func (d *Driver) createUTS(container *configs.Config, c *exectypes.Command) error {
 	if c.UTS.HostUTS {
 		container.Namespaces.Remove(configs.NEWUTS)
 		container.Hostname = ""
@@ -204,12 +207,12 @@ func (d *Driver) setPrivileged(container *configs.Config) (err error) {
 	return nil
 }
 
-func (d *Driver) setCapabilities(container *configs.Config, c *execdriver.Command) (err error) {
+func (d *Driver) setCapabilities(container *configs.Config, c *exectypes.Command) (err error) {
 	container.Capabilities, err = execdriver.TweakCapabilities(container.Capabilities, c.CapAdd, c.CapDrop)
 	return err
 }
 
-func (d *Driver) setupRlimits(container *configs.Config, c *execdriver.Command) {
+func (d *Driver) setupRlimits(container *configs.Config, c *exectypes.Command) {
 	if c.Resources == nil {
 		return
 	}
@@ -223,7 +226,7 @@ func (d *Driver) setupRlimits(container *configs.Config, c *execdriver.Command) 
 	}
 }
 
-func (d *Driver) setupMounts(container *configs.Config, c *execdriver.Command) error {
+func (d *Driver) setupMounts(container *configs.Config, c *exectypes.Command) error {
 	userMounts := make(map[string]struct{})
 	for _, m := range c.Mounts {
 		userMounts[m.Destination] = struct{}{}
@@ -260,7 +263,7 @@ func (d *Driver) setupMounts(container *configs.Config, c *execdriver.Command) e
 	return nil
 }
 
-func (d *Driver) setupLabels(container *configs.Config, c *execdriver.Command) {
+func (d *Driver) setupLabels(container *configs.Config, c *exectypes.Command) {
 	container.ProcessLabel = c.ProcessLabel
 	container.MountLabel = c.MountLabel
 }

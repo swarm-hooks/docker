@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/timeutils"
+
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
 // ErrReadLogsNotSupported is returned when the logger does not support reading logs.
@@ -22,21 +24,6 @@ const (
 	TimeFormat           = timeutils.RFC3339NanoFixed
 	logWatcherBufferSize = 4096
 )
-
-// Message is datastructure that represents record from some container.
-type Message struct {
-	ContainerID string
-	Line        []byte
-	Source      string
-	Timestamp   time.Time
-}
-
-// Logger is the interface for docker logging drivers.
-type Logger interface {
-	Log(*Message) error
-	Name() string
-	Close() error
-}
 
 // ReadConfig is the configuration passed into ReadLogs.
 type ReadConfig struct {
@@ -54,7 +41,7 @@ type LogReader interface {
 // LogWatcher is used when consuming logs read from the LogReader interface.
 type LogWatcher struct {
 	// For sending log messages to a reader.
-	Msg chan *Message
+	Msg chan *config.Message
 	// For sending error messages that occur while while reading logs.
 	Err           chan error
 	closeNotifier chan struct{}
@@ -63,7 +50,7 @@ type LogWatcher struct {
 // NewLogWatcher returns a new LogWatcher.
 func NewLogWatcher() *LogWatcher {
 	return &LogWatcher{
-		Msg:           make(chan *Message, logWatcherBufferSize),
+		Msg:           make(chan *config.Message, logWatcherBufferSize),
 		Err:           make(chan error, 1),
 		closeNotifier: make(chan struct{}),
 	}

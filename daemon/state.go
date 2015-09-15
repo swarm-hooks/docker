@@ -7,23 +7,10 @@ import (
 
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/docker/pkg/units"
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
-type State struct {
-	sync.Mutex
-	Running           bool
-	Paused            bool
-	Restarting        bool
-	OOMKilled         bool
-	removalInProgress bool // Not need for this to be persistent on disk.
-	Dead              bool
-	Pid               int
-	ExitCode          int
-	Error             string // contains last known error when starting the container
-	StartedAt         time.Time
-	FinishedAt        time.Time
-	waitChan          chan struct{}
-}
+// maybe move all this function somewhere else as well.
 
 func NewState() *State {
 	return &State{

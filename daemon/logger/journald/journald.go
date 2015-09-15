@@ -7,6 +7,8 @@ package journald
 import (
 	"fmt"
 
+	"github.com/docker/docker/pkg/xapi/config"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos/go-systemd/journal"
 	"github.com/docker/docker/daemon/logger"
@@ -27,7 +29,7 @@ func init() {
 // New creates a journald logger using the configuration passed in on
 // the context. Supported context configuration variables are
 // syslog-address, syslog-facility, & syslog-tag.
-func New(ctx logger.Context) (logger.Logger, error) {
+func New(ctx logger.Context) (config.Logger, error) {
 	if !journal.Enabled() {
 		return nil, fmt.Errorf("journald is not enabled on this host")
 	}
@@ -44,7 +46,7 @@ func New(ctx logger.Context) (logger.Logger, error) {
 	return &journald{Jmap: jmap}, nil
 }
 
-func (s *journald) Log(msg *logger.Message) error {
+func (s *journald) Log(msg *config.Message) error {
 	if msg.Source == "stderr" {
 		return journal.Send(string(msg.Line), journal.PriErr, s.Jmap)
 	}

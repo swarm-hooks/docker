@@ -10,25 +10,13 @@ import (
 
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/system"
+	"github.com/docker/docker/pkg/xapi/config"
 	"github.com/docker/docker/volume"
 )
 
 // ErrVolumeReadonly is used to signal an error when trying to copy data into
 // a volume mount that is not writable.
 var ErrVolumeReadonly = errors.New("mounted volume is marked read-only")
-
-// mountPoint is the intersection point between a volume and a container. It
-// specifies which volume is to be used and where inside a container it should
-// be mounted.
-type mountPoint struct {
-	Name        string
-	Destination string
-	Driver      string
-	RW          bool
-	Volume      volume.Volume `json:"-"`
-	Source      string
-	Mode        string `json:"Relabel"` // Originally field was `Relabel`"
-}
 
 // Setup sets up a mount point by either mounting the volume if it is
 // configured, or creating the source directory if supplied.

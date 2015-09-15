@@ -1,3 +1,4 @@
+// this whole thing needs to be moved to a pkg/
 package runconfig
 
 import (

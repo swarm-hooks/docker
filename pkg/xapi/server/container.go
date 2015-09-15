@@ -12,11 +12,12 @@ import (
 	"golang.org/x/net/websocket"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/xapi/types"
-	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/signal"
 	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi"
+	"github.com/docker/docker/pkg/xapi/config"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/runconfig"
 )
 
@@ -29,7 +30,7 @@ func (s *Server) getContainersByName(version version.Version, w http.ResponseWri
 		return getContainersByNameDownlevel(w, s, vars["name"])
 	}
 
-	containerJSON, err := s.daemon.ContainerInspect(vars["name"])
+	containerJSON, err := s.impl.ContainerInspect(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -41,7 +42,7 @@ func (s *Server) getContainersJSON(version version.Version, w http.ResponseWrite
 		return err
 	}
 
-	config := &daemon.ContainersConfig{
+	config := &config.ContainersConfig{
 		All:     boolValue(r, "all"),
 		Size:    boolValue(r, "size"),
 		Since:   r.Form.Get("since"),
@@ -57,7 +58,7 @@ func (s *Server) getContainersJSON(version version.Version, w http.ResponseWrite
 		config.Limit = limit
 	}
 
-	containers, err := s.daemon.Containers(config)
+	containers, err := s.impl.Containers(config)
 	if err != nil {
 		return err
 	}
@@ -87,13 +88,13 @@ func (s *Server) getContainersStats(version version.Version, w http.ResponseWrit
 		closeNotifier = notifier.CloseNotify()
 	}
 
-	config := &daemon.ContainerStatsConfig{
+	config := &config.ContainerStatsConfig{
 		Stream:    stream,
 		OutStream: out,
 		Stop:      closeNotifier,
 	}
 
-	return s.daemon.ContainerStats(vars["name"], config)
+	return s.impl.ContainerStats(vars["name"], config)
 }
 
 func (s *Server) getContainersLogs(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -124,7 +125,7 @@ func (s *Server) getContainersLogs(version version.Version, w http.ResponseWrite
 		closeNotifier = notifier.CloseNotify()
 	}
 
-	c, err := s.daemon.Get(vars["name"])
+	c, err := s.impl.Get(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -135,7 +136,7 @@ func (s *Server) getContainersLogs(version version.Version, w http.ResponseWrite
 	// not yet produced any data)
 	outStream.Write(nil)
 
-	logsConfig := &daemon.ContainerLogsConfig{
+	logsConfig := &config.ContainerLogsConfig{
 		Follow:     boolValue(r, "follow"),
 		Timestamps: boolValue(r, "timestamps"),
 		Since:      since,
@@ -146,7 +147,7 @@ func (s *Server) getContainersLogs(version version.Version, w http.ResponseWrite
 		Stop:       closeNotifier,
 	}
 
-	if err := s.daemon.ContainerLogs(c, logsConfig); err != nil {
+	if err := s.impl.ContainerLogs(c, logsConfig); err != nil {
 		fmt.Fprintf(w, "Error running logs job: %s\n", err)
 	}
 
@@ -158,7 +159,7 @@ func (s *Server) getContainersExport(version version.Version, w http.ResponseWri
 		return fmt.Errorf("Missing parameter")
 	}
 
-	return s.daemon.ContainerExport(vars["name"], w)
+	return s.impl.ContainerExport(vars["name"], w)
 }
 
 func (s *Server) postContainersStart(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -186,7 +187,7 @@ func (s *Server) postContainersStart(version version.Version, w http.ResponseWri
 		hostConfig = c
 	}
 
-	if err := s.daemon.ContainerStart(vars["name"], hostConfig); err != nil {
+	if err := s.impl.ContainerStart(vars["name"], hostConfig); err != nil {
 		if err.Error() == "Container already started" {
 			w.WriteHeader(http.StatusNotModified)
 			return nil
@@ -207,7 +208,7 @@ func (s *Server) postContainersStop(version version.Version, w http.ResponseWrit
 
 	seconds, _ := strconv.Atoi(r.Form.Get("t"))
 
-	if err := s.daemon.ContainerStop(vars["name"], seconds); err != nil {
+	if err := s.impl.ContainerStop(vars["name"], seconds); err != nil {
 		if err.Error() == "Container already stopped" {
 			w.WriteHeader(http.StatusNotModified)
 			return nil
@@ -252,8 +253,8 @@ func (s *Server) postContainersKill(version version.Version, w http.ResponseWrit
 		}
 	}
 
-	if err := s.daemon.ContainerKill(name, sig); err != nil {
-		_, isStopped := err.(daemon.ErrContainerNotRunning)
+	if err := s.impl.ContainerKill(name, sig); err != nil {
+		_, isStopped := err.(impl.ErrContainerNotRunning)
 		// Return error that's not caused because the container is stopped.
 		// Return error if the container is not running and the api is >= 1.20
 		// to keep backwards compatibility.
@@ -276,7 +277,7 @@ func (s *Server) postContainersRestart(version version.Version, w http.ResponseW
 
 	timeout, _ := strconv.Atoi(r.Form.Get("t"))
 
-	if err := s.daemon.ContainerRestart(vars["name"], timeout); err != nil {
+	if err := s.impl.ContainerRestart(vars["name"], timeout); err != nil {
 		return err
 	}
 
@@ -293,7 +294,7 @@ func (s *Server) postContainersPause(version version.Version, w http.ResponseWri
 		return err
 	}
 
-	if err := s.daemon.ContainerPause(vars["name"]); err != nil {
+	if err := s.impl.ContainerPause(vars["name"]); err != nil {
 		return err
 	}
 
@@ -310,7 +311,7 @@ func (s *Server) postContainersUnpause(version version.Version, w http.ResponseW
 		return err
 	}
 
-	if err := s.daemon.ContainerUnpause(vars["name"]); err != nil {
+	if err := s.impl.ContainerUnpause(vars["name"]); err != nil {
 		return err
 	}
 
@@ -324,7 +325,7 @@ func (s *Server) postContainersWait(version version.Version, w http.ResponseWrit
 		return fmt.Errorf("Missing parameter")
 	}
 
-	status, err := s.daemon.ContainerWait(vars["name"], -1*time.Second)
+	status, err := s.impl.ContainerWait(vars["name"], -1*time.Second)
 	if err != nil {
 		return err
 	}
@@ -339,7 +340,7 @@ func (s *Server) getContainersChanges(version version.Version, w http.ResponseWr
 		return fmt.Errorf("Missing parameter")
 	}
 
-	changes, err := s.daemon.ContainerChanges(vars["name"])
+	changes, err := s.impl.ContainerChanges(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -356,7 +357,7 @@ func (s *Server) getContainersTop(version version.Version, w http.ResponseWriter
 		return err
 	}
 
-	procList, err := s.daemon.ContainerTop(vars["name"], r.Form.Get("ps_args"))
+	procList, err := s.impl.ContainerTop(vars["name"], r.Form.Get("ps_args"))
 	if err != nil {
 		return err
 	}
@@ -374,7 +375,7 @@ func (s *Server) postContainerRename(version version.Version, w http.ResponseWri
 
 	name := vars["name"]
 	newName := r.Form.Get("name")
-	if err := s.daemon.ContainerRename(name, newName); err != nil {
+	if err := s.impl.ContainerRename(name, newName); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -399,7 +400,7 @@ func (s *Server) postContainersCreate(version version.Version, w http.ResponseWr
 	}
 	adjustCPUShares(version, hostConfig)
 
-	containerID, warnings, err := s.daemon.ContainerCreate(name, config, hostConfig)
+	containerID, warnings, err := s.impl.ContainerCreate(name, config, hostConfig)
 	if err != nil {
 		return err
 	}
@@ -419,13 +420,13 @@ func (s *Server) deleteContainers(version version.Version, w http.ResponseWriter
 	}
 
 	name := vars["name"]
-	config := &daemon.ContainerRmConfig{
+	config := &impl.ContainerRmConfig{
 		ForceRemove:  boolValue(r, "force"),
 		RemoveVolume: boolValue(r, "v"),
 		RemoveLink:   boolValue(r, "link"),
 	}
 
-	if err := s.daemon.ContainerRm(name, config); err != nil {
+	if err := s.impl.ContainerRm(name, config); err != nil {
 		// Force a 404 for the empty string
 		if strings.Contains(strings.ToLower(err.Error()), "prefix can't be empty") {
 			return fmt.Errorf("no such id: \"\"")
@@ -455,7 +456,7 @@ func (s *Server) postContainersResize(version version.Version, w http.ResponseWr
 		return err
 	}
 
-	return s.daemon.ContainerResize(vars["name"], height, width)
+	return s.impl.ContainerResize(vars["name"], height, width)
 }
 
 func (s *Server) postContainersAttach(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -466,7 +467,7 @@ func (s *Server) postContainersAttach(version version.Version, w http.ResponseWr
 		return fmt.Errorf("Missing parameter")
 	}
 
-	cont, err := s.daemon.Get(vars["name"])
+	cont, err := s.impl.Get(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -483,7 +484,7 @@ func (s *Server) postContainersAttach(version version.Version, w http.ResponseWr
 		fmt.Fprintf(outStream, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
 	}
 
-	attachWithLogsConfig := &daemon.ContainerAttachWithLogsConfig{
+	attachWithLogsConfig := &impl.ContainerAttachWithLogsConfig{
 		InStream:  inStream,
 		OutStream: outStream,
 		UseStdin:  boolValue(r, "stdin"),
@@ -493,7 +494,7 @@ func (s *Server) postContainersAttach(version version.Version, w http.ResponseWr
 		Stream:    boolValue(r, "stream"),
 	}
 
-	if err := s.daemon.ContainerAttachWithLogs(cont, attachWithLogsConfig); err != nil {
+	if err := s.impl.ContainerAttachWithLogs(cont, attachWithLogsConfig); err != nil {
 		fmt.Fprintf(outStream, "Error attaching: %s\n", err)
 	}
 
@@ -508,7 +509,7 @@ func (s *Server) wsContainersAttach(version version.Version, w http.ResponseWrit
 		return fmt.Errorf("Missing parameter")
 	}
 
-	cont, err := s.daemon.Get(vars["name"])
+	cont, err := s.impl.Get(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -516,7 +517,7 @@ func (s *Server) wsContainersAttach(version version.Version, w http.ResponseWrit
 	h := websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 
-		wsAttachWithLogsConfig := &daemon.ContainerWsAttachWithLogsConfig{
+		wsAttachWithLogsConfig := &impl.ContainerWsAttachWithLogsConfig{
 			InStream:  ws,
 			OutStream: ws,
 			ErrStream: ws,
@@ -524,7 +525,7 @@ func (s *Server) wsContainersAttach(version version.Version, w http.ResponseWrit
 			Stream:    boolValue(r, "stream"),
 		}
 
-		if err := s.daemon.ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig); err != nil {
+		if err := s.impl.ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig); err != nil {
 			logrus.Errorf("Error attaching websocket: %s", err)
 		}
 	})

@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/docker/pkg/parsers/kernel"
 	"github.com/docker/docker/pkg/parsers/operatingsystem"
 	"github.com/docker/docker/pkg/system"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
 )
@@ -75,7 +75,7 @@ func (daemon *Daemon) SystemInfo() (*types.Info, error) {
 		KernelVersion:      kernelVersion,
 		OperatingSystem:    operatingSystem,
 		IndexServerAddress: registry.IndexServer,
-		RegistryConfig:     daemon.RegistryService.Config,
+		RegistryConfig:     daemon.registryService.Config,
 		InitSha1:           dockerversion.INITSHA1,
 		InitPath:           initPath,
 		NCPU:               runtime.NumCPU(),

@@ -13,6 +13,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/logger"
+
+	"github.com/docker/docker/pkg/xapi/config"
+
 	"github.com/fluent/fluent-logger-golang/fluent"
 )
 
@@ -91,7 +94,7 @@ func parseConfig(ctx logger.Context) (string, int, string, error) {
 // New creates a fluentd logger using the configuration passed in on
 // the context. Supported context configuration variables are
 // fluentd-address & fluentd-tag.
-func New(ctx logger.Context) (logger.Logger, error) {
+func New(ctx logger.Context) (config.Logger, error) {
 	host, port, tag, err := parseConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -112,7 +115,7 @@ func New(ctx logger.Context) (logger.Logger, error) {
 	}, nil
 }
 
-func (f *fluentd) Log(msg *logger.Message) error {
+func (f *fluentd) Log(msg *config.Message) error {
 	data := map[string]string{
 		"container_id":   f.containerID,
 		"container_name": f.containerName,

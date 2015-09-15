@@ -23,7 +23,8 @@ func (daemon *Daemon) ContainerInspect(name string) (*types.ContainerJSON, error
 
 	mountPoints := addMountPoints(container)
 
-	return &types.ContainerJSON{base, mountPoints, container.Config}, nil
+	// shouldn't be constructing json in the daemon
+	return &types.ContainerJSON{base, mountPoints, container.Config}, nil 
 }
 
 func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSONBase, error) {
@@ -54,6 +55,7 @@ func (daemon *Daemon) getInspectData(container *Container) (*types.ContainerJSON
 		FinishedAt: container.State.FinishedAt.Format(time.RFC3339Nano),
 	}
 
+	// shouldn't be contsructing json here
 	contJSONBase := &types.ContainerJSONBase{
 		Id:              container.ID,
 		Created:         container.Created.Format(time.RFC3339Nano),

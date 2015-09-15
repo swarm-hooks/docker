@@ -25,6 +25,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/ulimit"
+	"github.com/docker/docker/pkg/xapi/config"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
 	"github.com/docker/docker/volume"
@@ -38,21 +39,6 @@ import (
 )
 
 const DefaultPathEnv = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
-type Container struct {
-	CommonContainer
-
-	// Fields below here are platform specific.
-	activeLinks     map[string]*links.Link
-	AppArmorProfile string
-	HostnamePath    string
-	HostsPath       string
-	MountPoints     map[string]*mountPoint
-	ResolvConfPath  string
-	UpdateDns       bool
-	Volumes         map[string]string // Deprecated since 1.7, kept for backwards compatibility
-	VolumesRW       map[string]bool   // Deprecated since 1.7, kept for backwards compatibility
-}
 
 func killProcessDirectly(container *Container) error {
 	if _, err := container.WaitStop(10 * time.Second); err != nil {

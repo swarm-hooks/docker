@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/graph"
@@ -18,6 +17,7 @@ import (
 	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/pkg/ulimit"
 	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
 )
@@ -109,7 +109,7 @@ func (s *Server) postImagesCreate(version version.Version, w http.ResponseWriter
 			OutStream:   output,
 		}
 
-		err = s.daemon.Repositories().Pull(image, tag, imagePullConfig)
+		err = s.impl.Repositories().Pull(image, tag, imagePullConfig)
 	} else { //import
 		if tag == "" {
 			repo, tag = parsers.ParseRepositoryTag(repo)
@@ -126,7 +126,7 @@ func (s *Server) postImagesCreate(version version.Version, w http.ResponseWriter
 			return err
 		}
 
-		err = s.daemon.Repositories().Import(src, repo, tag, r.Body, output, newConfig)
+		err = s.impl.Repositories().Import(src, repo, tag, r.Body, output, newConfig)
 	}
 	if err != nil {
 		if !output.Flushed() {
@@ -181,7 +181,7 @@ func (s *Server) postImagesPush(version version.Version, w http.ResponseWriter, 
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := s.daemon.Repositories().Push(name, imagePushConfig); err != nil {
+	if err := s.impl.Repositories().Push(name, imagePushConfig); err != nil {
 		if !output.Flushed() {
 			return err
 		}
@@ -209,7 +209,7 @@ func (s *Server) getImagesGet(version version.Version, w http.ResponseWriter, r 
 		names = r.Form["names"]
 	}
 
-	if err := s.daemon.Repositories().ImageExport(names, output); err != nil {
+	if err := s.impl.Repositories().ImageExport(names, output); err != nil {
 		if !output.Flushed() {
 			return err
 		}
@@ -220,7 +220,7 @@ func (s *Server) getImagesGet(version version.Version, w http.ResponseWriter, r 
 }
 
 func (s *Server) postImagesLoad(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-	return s.daemon.Repositories().Load(r.Body, w)
+	return s.impl.Repositories().Load(r.Body, w)
 }
 
 func (s *Server) deleteImages(version version.Version, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -235,7 +235,7 @@ func (s *Server) deleteImages(version version.Version, w http.ResponseWriter, r 
 	force := boolValue(r, "force")
 	noprune := boolValue(r, "noprune")
 
-	list, err := s.daemon.ImageDelete(name, force, noprune)
+	list, err := s.impl.ImageDelete(name, force, noprune)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (s *Server) getImagesByName(version version.Version, w http.ResponseWriter,
 		return fmt.Errorf("Missing parameter")
 	}
 
-	imageInspect, err := s.daemon.Repositories().Lookup(vars["name"])
+	imageInspect, err := s.impl.Repositories().Lookup(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (s *Server) getImagesJSON(version version.Version, w http.ResponseWriter, r
 	}
 
 	// FIXME: The filter parameter could just be a match filter
-	images, err := s.daemon.Repositories().Images(r.Form.Get("filters"), r.Form.Get("filter"), boolValue(r, "all"))
+	images, err := s.impl.Repositories().Images(r.Form.Get("filters"), r.Form.Get("filter"), boolValue(r, "all"))
 	if err != nil {
 		return err
 	}
@@ -360,7 +360,7 @@ func (s *Server) getImagesHistory(version version.Version, w http.ResponseWriter
 	}
 
 	name := vars["name"]
-	history, err := s.daemon.Repositories().History(name)
+	history, err := s.impl.Repositories().History(name)
 	if err != nil {
 		return err
 	}
@@ -380,10 +380,10 @@ func (s *Server) postImagesTag(version version.Version, w http.ResponseWriter, r
 	tag := r.Form.Get("tag")
 	force := boolValue(r, "force")
 	name := vars["name"]
-	if err := s.daemon.Repositories().Tag(repo, tag, name, force); err != nil {
+	if err := s.impl.Repositories().Tag(repo, tag, name, force); err != nil {
 		return err
 	}
-	s.daemon.EventsService.Log("tag", utils.ImageReference(repo, tag), "")
+	s.impl.EventsService.Log("tag", utils.ImageReference(repo, tag), "")
 	w.WriteHeader(http.StatusCreated)
 	return nil
 }
@@ -411,7 +411,7 @@ func (s *Server) getImagesSearch(version version.Version, w http.ResponseWriter,
 			headers[k] = v
 		}
 	}
-	query, err := s.daemon.RegistryService.Search(r.Form.Get("term"), config, headers)
+	query, err := s.impl.RegistryService().Search(r.Form.Get("term"), config, headers)
 	if err != nil {
 		return err
 	}
