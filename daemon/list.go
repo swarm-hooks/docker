@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/graphdb"
 	"github.com/docker/docker/pkg/nat"
 	"github.com/docker/docker/pkg/parsers/filters"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // iterationAction represents possible outcomes happening during the container iteration.

@@ -3,7 +3,7 @@ package daemon
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // ContainerTop is not supported on Windows and returns an error.

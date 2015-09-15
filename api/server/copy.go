@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/context"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // postContainersCopy is deprecated in favor of getContainersArchive.

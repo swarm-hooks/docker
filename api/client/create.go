@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/graph/tags"
 	"github.com/docker/docker/pkg/parsers"

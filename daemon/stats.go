@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/libnetwork/osl"
 	"github.com/opencontainers/runc/libcontainer"

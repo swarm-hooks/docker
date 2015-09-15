@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/utils"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // lookupRaw looks up an image by name in a TagStore and returns the raw JSON

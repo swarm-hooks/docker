@@ -10,13 +10,14 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/context"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/parsers/filters"
 	"github.com/docker/docker/pkg/parsers/kernel"
+	"github.com/docker/docker/pkg/version"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/utils"
 )
 
