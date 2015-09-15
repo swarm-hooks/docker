@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api"
 	"github.com/docker/docker/builder/command"
 	"github.com/docker/docker/builder/parser"
 	"github.com/docker/docker/cliconfig"
@@ -38,6 +37,7 @@ import (
 	"github.com/docker/docker/pkg/symlink"
 	"github.com/docker/docker/pkg/tarsum"
 	"github.com/docker/docker/pkg/ulimit"
+	"github.com/docker/docker/pkg/xapi"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
 )
@@ -206,12 +206,12 @@ func (b *builder) readDockerfile() error {
 	// that then look for 'dockerfile'.  If neither are found then default
 	// back to 'Dockerfile' and use that in the error message.
 	if b.dockerfileName == "" {
-		b.dockerfileName = api.DefaultDockerfileName
-		tmpFN := filepath.Join(b.contextPath, api.DefaultDockerfileName)
+		b.dockerfileName = xapi.DefaultDockerfileName
+		tmpFN := filepath.Join(b.contextPath, xapi.DefaultDockerfileName)
 		if _, err := os.Lstat(tmpFN); err != nil {
-			tmpFN = filepath.Join(b.contextPath, strings.ToLower(api.DefaultDockerfileName))
+			tmpFN = filepath.Join(b.contextPath, strings.ToLower(xapi.DefaultDockerfileName))
 			if _, err := os.Lstat(tmpFN); err == nil {
-				b.dockerfileName = strings.ToLower(api.DefaultDockerfileName)
+				b.dockerfileName = strings.ToLower(xapi.DefaultDockerfileName)
 			}
 		}
 	}

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/docker/docker/api"
 	"github.com/docker/docker/builder/parser"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/daemon"
@@ -23,6 +22,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/ulimit"
 	"github.com/docker/docker/pkg/urlutil"
+	"github.com/docker/docker/pkg/xapi"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
@@ -155,7 +155,7 @@ func Build(d *daemon.Daemon, buildConfig *Config) error {
 
 			// When we're downloading just a Dockerfile put it in
 			// the default name - don't allow the client to move/specify it
-			buildConfig.DockerfileName = api.DefaultDockerfileName
+			buildConfig.DockerfileName = xapi.DefaultDockerfileName
 
 			c, err := archive.Generate(buildConfig.DockerfileName, string(dockerFile))
 			if err != nil {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api"
+	"github.com/docker/docker/pkg/xapi"
 	"github.com/go-check/check"
 )
 

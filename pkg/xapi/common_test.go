@@ -1,4 +1,4 @@
-package api
+package xapi
 
 import (
 	"io/ioutil"

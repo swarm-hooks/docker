@@ -19,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api"
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/graph/tags"
 	"github.com/docker/docker/opts"
@@ -34,6 +33,7 @@ import (
 	"github.com/docker/docker/pkg/ulimit"
 	"github.com/docker/docker/pkg/units"
 	"github.com/docker/docker/pkg/urlutil"
+	"github.com/docker/docker/pkg/xapi"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
 )
@@ -335,12 +335,12 @@ func getDockerfileRelPath(givenContextDir, givenDockerfile string) (absContextDi
 	if absDockerfile == "" {
 		// No -f/--file was specified so use the default relative to the
 		// context directory.
-		absDockerfile = filepath.Join(absContextDir, api.DefaultDockerfileName)
+		absDockerfile = filepath.Join(absContextDir, xapi.DefaultDockerfileName)
 
 		// Just to be nice ;-) look for 'dockerfile' too but only
 		// use it if we found it, otherwise ignore this check
 		if _, err = os.Lstat(absDockerfile); os.IsNotExist(err) {
-			altPath := filepath.Join(absContextDir, strings.ToLower(api.DefaultDockerfileName))
+			altPath := filepath.Join(absContextDir, strings.ToLower(xapi.DefaultDockerfileName))
 			if _, err = os.Lstat(altPath); err == nil {
 				absDockerfile = altPath
 			}
@@ -419,7 +419,7 @@ func getContextFromReader(r io.Reader, dockerfileName string) (absContextDir, re
 	if !archive.IsArchive(magic) { // Input should be read as a Dockerfile.
 		// -f option has no meaning when we're reading it from stdin,
 		// so just use our default Dockerfile name
-		relDockerfile = api.DefaultDockerfileName
+		relDockerfile = xapi.DefaultDockerfileName
 
 		return absContextDir, relDockerfile, writeToFile(buf, filepath.Join(absContextDir, relDockerfile))
 	}

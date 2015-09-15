@@ -5,11 +5,11 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/docker/docker/api"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/autogen/dockerversion"
 	Cli "github.com/docker/docker/cli"
 	flag "github.com/docker/docker/pkg/mflag"
+	"github.com/docker/docker/pkg/xapi"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/utils"
 )
 
@@ -61,7 +61,7 @@ func (cli *DockerCli) CmdVersion(args ...string) (err error) {
 	vd := versionData{
 		Client: types.Version{
 			Version:      dockerversion.VERSION,
-			ApiVersion:   api.Version,
+			ApiVersion:   xapi.Version,
 			GoVersion:    runtime.Version(),
 			GitCommit:    dockerversion.GITCOMMIT,
 			BuildTime:    dockerversion.BUILDTIME,

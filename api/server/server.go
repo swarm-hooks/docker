@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/sockets"
@@ -160,7 +159,7 @@ func checkForJSON(r *http.Request) error {
 	}
 
 	// Otherwise it better be json
-	if api.MatchesContentType(ct, "application/json") {
+	if xapi.MatchesContentType(ct, "application/json") {
 		return nil
 	}
 	return fmt.Errorf("Content-Type specified (%s) must be 'application/json'", ct)
@@ -274,18 +273,18 @@ func makeHTTPHandler(logging bool, localMethod string, localRoute string, handle
 		}
 		version := version.Version(mux.Vars(r)["version"])
 		if version == "" {
-			version = api.Version
+			version = xapi.Version
 		}
 		if corsHeaders != "" {
 			writeCorsHeaders(w, r, corsHeaders)
 		}
 
-		if version.GreaterThan(api.Version) {
-			http.Error(w, fmt.Errorf("client is newer than server (client API version: %s, server API version: %s)", version, api.Version).Error(), http.StatusBadRequest)
+		if version.GreaterThan(xapi.Version) {
+			http.Error(w, fmt.Errorf("client is newer than server (client API version: %s, server API version: %s)", version, xapi.Version).Error(), http.StatusBadRequest)
 			return
 		}
-		if version.LessThan(api.MinVersion) {
-			http.Error(w, fmt.Errorf("client is too old, minimum supported API version is %s, please upgrade your client to a newer version", api.MinVersion).Error(), http.StatusBadRequest)
+		if version.LessThan(xapi.MinVersion) {
+			http.Error(w, fmt.Errorf("client is too old, minimum supported API version is %s, please upgrade your client to a newer version", xapi.MinVersion).Error(), http.StatusBadRequest)
 			return
 		}
 

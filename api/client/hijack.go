@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/pkg/promise"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/term"
+	"github.com/docker/docker/pkg/xapi"
 )
 
 type tlsClientCon struct {
@@ -138,7 +138,7 @@ func (cli *DockerCli) hijack(method, path string, setRawTerminal bool, in io.Rea
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(method, fmt.Sprintf("%s/v%s%s", cli.basePath, api.Version, path), params)
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/v%s%s", cli.basePath, xapi.Version, path), params)
 	if err != nil {
 		return err
 	}

@@ -9,11 +9,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/docker/docker/api"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/stringutils"
 	"github.com/docker/docker/pkg/units"
+	"github.com/docker/docker/pkg/xapi"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 const (
@@ -89,7 +89,7 @@ func (c *containerContext) RunningFor() string {
 
 func (c *containerContext) Ports() string {
 	c.addHeader(portsHeader)
-	return api.DisplayablePorts(c.c.Ports)
+	return xapi.DisplayablePorts(c.c.Ports)
 }
 
 func (c *containerContext) Status() string {

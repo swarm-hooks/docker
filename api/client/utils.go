@@ -18,14 +18,14 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/signal"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/term"
+	"github.com/docker/docker/pkg/xapi"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/registry"
 )
 
@@ -65,7 +65,7 @@ func (cli *DockerCli) clientRequest(method, path string, in io.Reader, headers m
 	if expectedPayload && in == nil {
 		in = bytes.NewReader([]byte{})
 	}
-	req, err := http.NewRequest(method, fmt.Sprintf("%s/v%s%s", cli.basePath, api.Version, path), in)
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/v%s%s", cli.basePath, xapi.Version, path), in)
 	if err != nil {
 		return serverResp, err
 	}
@@ -217,7 +217,7 @@ func (cli *DockerCli) stream(method, path string, opts *streamOpts) (*serverResp
 func (cli *DockerCli) streamBody(body io.ReadCloser, contentType string, rawTerminal bool, stdout, stderr io.Writer) error {
 	defer body.Close()
 
-	if api.MatchesContentType(contentType, "application/json") {
+	if xapi.MatchesContentType(contentType, "application/json") {
 		return jsonmessage.DisplayJSONMessagesStream(body, stdout, cli.outFd, cli.isTerminalOut)
 	}
 	if stdout != nil || stderr != nil {
