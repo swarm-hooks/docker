@@ -3,10 +3,11 @@ package config
 import (
 	"sync"
 
+	// get rid of this somehow
 	execdriver "github.com/docker/docker/pkg/xapi/types/exec"
 )
 
-type execConfig struct {
+type ExecConfig struct {
 	sync.Mutex
 	ID            string
 	Running       bool
@@ -23,7 +24,7 @@ type execConfig struct {
 	waitStart chan struct{}
 }
 
-type execStore struct {
-	s map[string]*execConfig
+type ExecStore struct {
+	s map[string]*ExecConfig
 	sync.RWMutex
 }

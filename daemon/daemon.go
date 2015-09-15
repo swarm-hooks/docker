@@ -49,17 +49,17 @@ var (
 )
 
 type contStore struct {
-	s map[string]*Container
+	s map[string]*config.Container
 	sync.Mutex
 }
 
-func (c *contStore) Add(id string, cont *Container) {
+func (c *contStore) Add(id string, cont *config.Container) {
 	c.Lock()
 	c.s[id] = cont
 	c.Unlock()
 }
 
-func (c *contStore) Get(id string) *Container {
+func (c *contStore) Get(id string) *config.Container {
 	c.Lock()
 	res := c.s[id]
 	c.Unlock()
@@ -72,7 +72,7 @@ func (c *contStore) Delete(id string) {
 	c.Unlock()
 }
 
-func (c *contStore) List() []*Container {
+func (c *contStore) List() []*config.Container {
 	containers := new(History)
 	c.Lock()
 	for _, cont := range c.s {
@@ -88,7 +88,7 @@ type Daemon struct {
 	repository       string
 	sysInitPath      string
 	containers       *contStore
-	execCommands     *execStore
+	execCommands     *config.ExecStore
 	graph            *graph.Graph
 	repositories     *graph.TagStore
 	idIndex          *truncindex.TruncIndex
@@ -118,7 +118,7 @@ func (daemon *Daemon) RegistryService() *registry.Service {
 //  - A partial container ID prefix (e.g. short ID) of any length that is
 //    unique enough to only return a single container object
 //  If none of these searches succeed, an error is returned
-func (daemon *Daemon) Get(prefixOrName string) (*Container, error) {
+func (daemon *Daemon) Get(prefixOrName string) (*config.Container, error) {
 	if containerByID := daemon.containers.Get(prefixOrName); containerByID != nil {
 		// prefix is an exact match to a full container ID
 		return containerByID, nil
@@ -150,7 +150,7 @@ func (daemon *Daemon) containerRoot(id string) string {
 
 // Load reads the contents of a container from disk
 // This is typically done at startup.
-func (daemon *Daemon) load(id string) (*Container, error) {
+func (daemon *Daemon) load(id string) (*config.Container, error) {
 	container := daemon.newBaseContainer(id)
 
 	if err := container.FromDisk(); err != nil {
@@ -166,12 +166,12 @@ func (daemon *Daemon) load(id string) (*Container, error) {
 
 // Register makes a container object usable by the daemon as <container.ID>
 // This is a wrapper for register
-func (daemon *Daemon) Register(container *Container) error {
+func (daemon *Daemon) Register(container *config.Container) error {
 	return daemon.register(container, true)
 }
 
 // register makes a container object usable by the daemon as <container.ID>
-func (daemon *Daemon) register(container *Container, updateSuffixarray bool) error {
+func (daemon *Daemon) register(container *config.Container, updateSuffixarray bool) error {
 	if container.daemon != nil || daemon.Exists(container.ID) {
 		return fmt.Errorf("Container is already loaded")
 	}
@@ -230,7 +230,7 @@ func (daemon *Daemon) register(container *Container, updateSuffixarray bool) err
 	return nil
 }
 
-func (daemon *Daemon) ensureName(container *Container) error {
+func (daemon *Daemon) ensureName(container *config.Container) error {
 	if container.Name == "" {
 		name, err := daemon.generateNewName(container.ID)
 		if err != nil {
@@ -247,7 +247,7 @@ func (daemon *Daemon) ensureName(container *Container) error {
 
 func (daemon *Daemon) restore() error {
 	type cr struct {
-		container  *Container
+		container  *config.Container
 		registered bool
 	}
 
@@ -304,7 +304,7 @@ func (daemon *Daemon) restore() error {
 	for _, c := range containers {
 		group.Add(1)
 
-		go func(container *Container, registered bool) {
+		go func(container *config.Container, registered bool) {
 			defer group.Done()
 
 			if !registered {
@@ -458,7 +458,7 @@ func (daemon *Daemon) getEntrypointAndArgs(configEntrypoint *runconfig.Entrypoin
 	return entrypoint, args
 }
 
-func (daemon *Daemon) newContainer(name string, config *runconfig.Config, imgID string) (*Container, error) {
+func (daemon *Daemon) newContainer(name string, config *runconfig.Config, imgID string) (*config.Container, error) {
 	var (
 		id  string
 		err error
@@ -496,7 +496,7 @@ func GetFullContainerName(name string) (string, error) {
 	return name, nil
 }
 
-func (daemon *Daemon) GetByName(name string) (*Container, error) {
+func (daemon *Daemon) GetByName(name string) (*config.Container, error) {
 	fullName, err := GetFullContainerName(name)
 	if err != nil {
 		return nil, err
@@ -512,12 +512,12 @@ func (daemon *Daemon) GetByName(name string) (*Container, error) {
 	return e, nil
 }
 
-func (daemon *Daemon) Children(name string) (map[string]*Container, error) {
+func (daemon *Daemon) Children(name string) (map[string]*config.Container, error) {
 	name, err := GetFullContainerName(name)
 	if err != nil {
 		return nil, err
 	}
-	children := make(map[string]*Container)
+	children := make(map[string]*config.Container)
 
 	err = daemon.containerGraph.Walk(name, func(p string, e *graphdb.Entity) error {
 		c, err := daemon.Get(e.ID())
@@ -543,7 +543,7 @@ func (daemon *Daemon) Parents(name string) ([]string, error) {
 	return daemon.containerGraph.Parents(name)
 }
 
-func (daemon *Daemon) RegisterLink(parent, child *Container, alias string) error {
+func (daemon *Daemon) RegisterLink(parent, child *config.Container, alias string) error {
 	fullName := filepath.Join(parent.Name, alias)
 	if !daemon.containerGraph.Exists(fullName) {
 		_, err := daemon.containerGraph.Set(fullName, child.ID)
@@ -726,7 +726,7 @@ func NewDaemon(config *Config, registryService *registry.Service) (daemon *Daemo
 
 	d.ID = trustKey.PublicKey().KeyID()
 	d.repository = daemonRepo
-	d.containers = &contStore{s: make(map[string]*Container)}
+	d.containers = &contStore{s: make(map[string]*config.Container)}
 	d.execCommands = newExecStore()
 	d.graph = g
 	d.repositories = repositories
@@ -793,7 +793,7 @@ func (daemon *Daemon) Shutdown() error {
 	return nil
 }
 
-func (daemon *Daemon) Mount(container *Container) error {
+func (daemon *Daemon) Mount(container *config.Container) error {
 	dir, err := daemon.driver.Get(container.ID, container.GetMountLabel())
 	if err != nil {
 		return fmt.Errorf("Error getting container %s from driver %s: %s", container.ID, daemon.driver, err)
@@ -813,20 +813,20 @@ func (daemon *Daemon) Mount(container *Container) error {
 	return nil
 }
 
-func (daemon *Daemon) Unmount(container *Container) error {
+func (daemon *Daemon) Unmount(container *config.Container) error {
 	daemon.driver.Put(container.ID)
 	return nil
 }
 
-func (daemon *Daemon) Run(c *Container, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
+func (daemon *Daemon) Run(c *config.Container, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (execdriver.ExitStatus, error) {
 	return daemon.execDriver.Run(c.command, pipes, startCallback)
 }
 
-func (daemon *Daemon) Kill(c *Container, sig int) error {
+func (daemon *Daemon) Kill(c *config.Container, sig int) error {
 	return daemon.execDriver.Kill(c.command, sig)
 }
 
-func (daemon *Daemon) Stats(c *Container) (*execdriver.ResourceStats, error) {
+func (daemon *Daemon) Stats(c *config.Container) (*execdriver.ResourceStats, error) {
 	return daemon.execDriver.Stats(c.ID)
 }
 
@@ -922,7 +922,7 @@ func tempDir(rootDir string) (string, error) {
 	return tmpDir, system.MkdirAll(tmpDir, 0700)
 }
 
-func (daemon *Daemon) setHostConfig(container *Container, hostConfig *runconfig.HostConfig) error {
+func (daemon *Daemon) setHostConfig(container *config.Container, hostConfig *runconfig.HostConfig) error {
 	container.Lock()
 	if err := parseSecurityOpt(container, hostConfig); err != nil {
 		container.Unlock()

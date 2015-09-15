@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/daemon/execdriver"
@@ -12,14 +11,14 @@ import (
 
 // maybe move all this function somewhere else as well.
 
-func NewState() *State {
-	return &State{
+func NewState() *config.State {
+	return &config.State{
 		waitChan: make(chan struct{}),
 	}
 }
 
 // String returns a human-readable description of the state
-func (s *State) String() string {
+func (s *config.State) String() string {
 	if s.Running {
 		if s.Paused {
 			return fmt.Sprintf("Up %s (Paused)", units.HumanDuration(time.Now().UTC().Sub(s.StartedAt)))
@@ -51,7 +50,7 @@ func (s *State) String() string {
 }
 
 // StateString returns a single string to describe state
-func (s *State) StateString() string {
+func (s *config.State) StateString() string {
 	if s.Running {
 		if s.Paused {
 			return "paused"

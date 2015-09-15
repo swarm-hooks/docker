@@ -3,7 +3,6 @@ package daemon
 import (
 	"io"
 	"os/exec"
-	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -20,8 +19,8 @@ const (
 
 // newContainerMonitor returns an initialized containerMonitor for the provided container
 // honoring the provided restart policy
-func newContainerMonitor(container *Container, policy runconfig.RestartPolicy) *containerMonitor {
-	return &containerMonitor{
+func newContainerMonitor(container *config.Container, policy runconfig.RestartPolicy) *config.ContainerMonitor {
+	return &config.ContainerMonitor{
 		container:     container,
 		restartPolicy: policy,
 		timeIncrement: defaultTimeIncrement,
@@ -32,7 +31,7 @@ func newContainerMonitor(container *Container, policy runconfig.RestartPolicy) *
 
 // Stop signals to the container monitor that it should stop monitoring the container
 // for exits the next time the process dies
-func (m *containerMonitor) ExitOnNext() {
+func (m *config.ContainerMonitor) ExitOnNext() {
 	m.mux.Lock()
 
 	// we need to protect having a double close of the channel when stop is called
@@ -47,7 +46,7 @@ func (m *containerMonitor) ExitOnNext() {
 
 // Close closes the container's resources such as networking allocations and
 // unmounts the contatiner's root filesystem
-func (m *containerMonitor) Close() error {
+func (m *config.ContainerMonitor) Close() error {
 	// Cleanup networking and mounts
 	m.container.cleanup()
 
@@ -64,7 +63,7 @@ func (m *containerMonitor) Close() error {
 }
 
 // Start starts the containers process and monitors it according to the restart policy
-func (m *containerMonitor) Start() error {
+func (m *config.ContainerMonitor) Start() error {
 	var (
 		err        error
 		exitStatus execdriver.ExitStatus
@@ -147,10 +146,10 @@ func (m *containerMonitor) Start() error {
 	}
 }
 
-// resetMonitor resets the stateful fields on the containerMonitor based on the
+// resetMonitor resets the stateful fields on the config.ContainerMonitor based on the
 // previous runs success or failure.  Regardless of success, if the container had
 // an execution time of more than 10s then reset the timer back to the default
-func (m *containerMonitor) resetMonitor(successful bool) {
+func (m *config.ContainerMonitor) resetMonitor(successful bool) {
 	executionTime := time.Now().Sub(m.lastStartTime).Seconds()
 
 	if executionTime > 10 {
@@ -171,7 +170,7 @@ func (m *containerMonitor) resetMonitor(successful bool) {
 
 // waitForNextRestart waits with the default time increment to restart the container unless
 // a user or docker asks for the container to be stopped
-func (m *containerMonitor) waitForNextRestart() {
+func (m *config.ContainerMonitor) waitForNextRestart() {
 	select {
 	case <-time.After(time.Duration(m.timeIncrement) * time.Millisecond):
 	case <-m.stopChan:
@@ -180,7 +179,7 @@ func (m *containerMonitor) waitForNextRestart() {
 
 // shouldRestart checks the restart policy and applies the rules to determine if
 // the container's process should be restarted
-func (m *containerMonitor) shouldRestart(exitCode int) bool {
+func (m *config.ContainerMonitor) shouldRestart(exitCode int) bool {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -208,7 +207,7 @@ func (m *containerMonitor) shouldRestart(exitCode int) bool {
 
 // callback ensures that the container's state is properly updated after we
 // received ack from the execution drivers
-func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid int) {
+func (m *config.ContainerMonitor) callback(processConfig *execdriver.ProcessConfig, pid int) {
 	if processConfig.Tty {
 		// The callback is called after the process Start()
 		// so we are in the parent process. In TTY mode, stdin/out/err is the PtySlave
@@ -236,7 +235,7 @@ func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid
 // resetContainer resets the container's IO and ensures that the command is able to be executed again
 // by copying the data into a new struct
 // if lock is true, then container locked during reset
-func (m *containerMonitor) resetContainer(lock bool) {
+func (m *config.ContainerMonitor) resetContainer(lock bool) {
 	container := m.container
 	if lock {
 		container.Lock()

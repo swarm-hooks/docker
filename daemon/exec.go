@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -18,30 +17,30 @@ import (
 	"github.com/docker/docker/runconfig"
 )
 
-func newExecStore() *execStore {
-	return &execStore{s: make(map[string]*execConfig, 0)}
+func newExecStore() *config.ExecStore {
+	return &config.ExecStore{s: make(map[string]*config.ExecConfig, 0)}
 }
 
-func (e *execStore) Add(id string, execConfig *execConfig) {
+func (e *config.ExecStore) Add(id string, execConfig *config.ExecConfig) {
 	e.Lock()
-	e.s[id] = execConfig
+	e.s[id] = config.ExecConfig
 	e.Unlock()
 }
 
-func (e *execStore) Get(id string) *execConfig {
+func (e *config.ExecStore) Get(id string) *config.ExecConfig {
 	e.RLock()
 	res := e.s[id]
 	e.RUnlock()
 	return res
 }
 
-func (e *execStore) Delete(id string) {
+func (e *config.ExecStore) Delete(id string) {
 	e.Lock()
 	delete(e.s, id)
 	e.Unlock()
 }
 
-func (e *execStore) List() []string {
+func (e *config.ExecStore) List() []string {
 	var IDs []string
 	e.RLock()
 	for id := range e.s {
@@ -51,23 +50,23 @@ func (e *execStore) List() []string {
 	return IDs
 }
 
-func (execConfig *execConfig) Resize(h, w int) error {
+func (execConfig *config.ExecConfig) Resize(h, w int) error {
 	select {
 	case <-execConfig.waitStart:
 	case <-time.After(time.Second):
-		return fmt.Errorf("Exec %s is not running, so it can not be resized.", execConfig.ID)
+		return fmt.Errorf("Exec %s is not running, so it can not be resized.", config.ExecConfig.ID)
 	}
 	return execConfig.ProcessConfig.Terminal.Resize(h, w)
 }
 
-func (d *Daemon) registerExecCommand(execConfig *execConfig) {
+func (d *Daemon) registerExecCommand(execConfig *config.ExecConfig) {
 	// Storing execs in container in order to kill them gracefully whenever the container is stopped or removed.
-	execConfig.Container.execCommands.Add(execConfig.ID, execConfig)
+	config.ExecConfig.Container.execCommands.Add(config.ExecConfig.ID, config.ExecConfig)
 	// Storing execs in daemon for easy access via remote API.
-	d.execCommands.Add(execConfig.ID, execConfig)
+	d.execCommands.Add(config.ExecConfig.ID, config.ExecConfig)
 }
 
-func (d *Daemon) getExecConfig(name string) (*execConfig, error) {
+func (d *Daemon) getExecConfig(name string) (*config.ExecConfig, error) {
 	execConfig := d.execCommands.Get(name)
 
 	// If the exec is found but its container is not in the daemon's list of
@@ -76,19 +75,19 @@ func (d *Daemon) getExecConfig(name string) (*execConfig, error) {
 	// the user sees the same error now that they will after the
 	// 5 minute clean-up loop is run which erases old/dead execs.
 
-	if execConfig != nil && d.containers.Get(execConfig.Container.ID) != nil {
+	if config.ExecConfig != nil && d.containers.Get(config.ExecConfig.Container.ID) != nil {
 
-		if !execConfig.Container.IsRunning() {
-			return nil, fmt.Errorf("Container %s is not running", execConfig.Container.ID)
+		if !config.ExecConfig.Container.IsRunning() {
+			return nil, fmt.Errorf("Container %s is not running", config.ExecConfig.Container.ID)
 		}
-		return execConfig, nil
+		return config.ExecConfig, nil
 	}
 
 	return nil, fmt.Errorf("No such exec instance '%s' found in daemon", name)
 }
 
-func (d *Daemon) unregisterExecCommand(execConfig *execConfig) {
-	execConfig.Container.execCommands.Delete(execConfig.ID)
+func (d *Daemon) unregisterExecCommand(execConfig *config.ExecConfig) {
+	xecConfig.Container.execCommands.Delete(execConfig.ID)
 	d.execCommands.Delete(execConfig.ID)
 }
 
@@ -133,7 +132,7 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 		User:       user,
 	}
 
-	execConfig := &execConfig{
+	execConfig := &config.ExecConfig{
 		ID:            stringid.GenerateNonCryptoID(),
 		OpenStdin:     config.AttachStdin,
 		OpenStdout:    config.AttachStdout,
@@ -145,11 +144,11 @@ func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, erro
 		waitStart:     make(chan struct{}),
 	}
 
-	d.registerExecCommand(execConfig)
+	d.registerExecCommand(config.ExecConfig)
 
-	container.LogEvent("exec_create: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
+	container.LogEvent("exec_create: " + config.ExecConfig.ProcessConfig.Entrypoint + " " + strings.Join(config.ExecConfig.ProcessConfig.Arguments, " "))
 
-	return execConfig.ID, nil
+	return config.ExecConfig.ID, nil
 
 }
 
@@ -166,23 +165,23 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	}
 
 	func() {
-		execConfig.Lock()
-		defer execConfig.Unlock()
-		if execConfig.Running {
+		config.ExecConfig.Lock()
+		defer config.ExecConfig.Unlock()
+		if config.ExecConfig.Running {
 			err = fmt.Errorf("Error: Exec command %s is already running", execName)
 		}
-		execConfig.Running = true
+		config.ExecConfig.Running = true
 	}()
 	if err != nil {
 		return err
 	}
 
-	logrus.Debugf("starting exec command %s in container %s", execConfig.ID, execConfig.Container.ID)
-	container := execConfig.Container
+	logrus.Debugf("starting exec command %s in container %s", config.ExecConfig.ID, config.ExecConfig.Container.ID)
+	container := config.ExecConfig.Container
 
-	container.LogEvent("exec_start: " + execConfig.ProcessConfig.Entrypoint + " " + strings.Join(execConfig.ProcessConfig.Arguments, " "))
+	container.LogEvent("exec_start: " + config.ExecConfig.ProcessConfig.Entrypoint + " " + strings.Join(config.ExecConfig.ProcessConfig.Arguments, " "))
 
-	if execConfig.OpenStdin {
+	if config.ExecConfig.OpenStdin {
 		r, w := io.Pipe()
 		go func() {
 			defer w.Close()
@@ -191,32 +190,32 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 		}()
 		cStdin = r
 	}
-	if execConfig.OpenStdout {
+	if config.ExecConfig.OpenStdout {
 		cStdout = stdout
 	}
-	if execConfig.OpenStderr {
+	if config.ExecConfig.OpenStderr {
 		cStderr = stderr
 	}
 
-	execConfig.StreamConfig.stderr = broadcastwriter.New()
-	execConfig.StreamConfig.stdout = broadcastwriter.New()
+	config.ExecConfig.StreamConfig.stderr = broadcastwriter.New()
+	config.ExecConfig.StreamConfig.stdout = broadcastwriter.New()
 	// Attach to stdin
-	if execConfig.OpenStdin {
-		execConfig.StreamConfig.stdin, execConfig.StreamConfig.stdinPipe = io.Pipe()
+	if config.ExecConfig.OpenStdin {
+		config.ExecConfig.StreamConfig.stdin, config.ExecConfig.StreamConfig.stdinPipe = io.Pipe()
 	} else {
-		execConfig.StreamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
+		config.ExecConfig.StreamConfig.stdinPipe = ioutils.NopWriteCloser(ioutil.Discard) // Silently drop stdin
 	}
 
-	attachErr := attach(&execConfig.StreamConfig, execConfig.OpenStdin, true, execConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
+	attachErr := attach(&config.ExecConfig.StreamConfig, config.ExecConfig.OpenStdin, true, config.ExecConfig.ProcessConfig.Tty, cStdin, cStdout, cStderr)
 
 	execErr := make(chan error)
 
-	// Note, the execConfig data will be removed when the container
+	// Note, the config.ExecConfig data will be removed when the container
 	// itself is deleted.  This allows us to query it (for things like
 	// the exitStatus) even after the cmd is done running.
 
 	go func() {
-		if err := container.Exec(execConfig); err != nil {
+		if err := container.Exec(config.ExecConfig); err != nil {
 			execErr <- fmt.Errorf("Cannot run exec command %s in container %s: %s", execName, container.ID, err)
 		}
 	}()
@@ -233,7 +232,7 @@ func (d *Daemon) ContainerExecStart(execName string, stdin io.ReadCloser, stdout
 	return nil
 }
 
-func (d *Daemon) Exec(c *Container, execConfig *execConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
+func (d *Daemon) Exec(c *Container, execConfig *config.ExecConfig, pipes *execdriver.Pipes, startCallback execdriver.StartCallback) (int, error) {
 	exitStatus, err := d.execDriver.Exec(c.command, execConfig.ProcessConfig, pipes, startCallback)
 
 	// On err, make sure we don't leave ExitCode at zero
@@ -241,8 +240,8 @@ func (d *Daemon) Exec(c *Container, execConfig *execConfig, pipes *execdriver.Pi
 		exitStatus = 128
 	}
 
-	execConfig.ExitCode = exitStatus
-	execConfig.Running = false
+	config.ExecConfig.ExitCode = exitStatus
+	config.ExecConfig.Running = false
 
 	return exitStatus, err
 }

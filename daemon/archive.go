@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/ioutils"
+	"github.com/docker/docker/pkg/xapi/types"
+
+	"github.com/docker/docker/pkg/xapi/config"
 )
 
 // ErrExtractPointNotDirectory is used to convey that the operation to extract
@@ -74,7 +76,7 @@ func (daemon *Daemon) ContainerExtractToDir(name, path string, noOverwriteDirNon
 // host. Returns a resolved path (absolute path to the resource on the host),
 // the absolute path to the resource relative to the container's rootfs, and
 // a error if the path points to outside the container's rootfs.
-func (container *Container) resolvePath(path string) (resolvedPath, absPath string, err error) {
+func (container *config.Container) resolvePath(path string) (resolvedPath, absPath string, err error) {
 	// Consider the given path as an absolute path in the container.
 	absPath = archive.PreserveTrailingDotOrSeparator(filepath.Join(string(filepath.Separator), path), path)
 
@@ -98,7 +100,7 @@ func (container *Container) resolvePath(path string) (resolvedPath, absPath stri
 // be aquired before calling this method and the given path should be fully
 // resolved to a path on the host corresponding to the given absolute path
 // inside the container.
-func (container *Container) statPath(resolvedPath, absPath string) (stat *types.ContainerPathStat, err error) {
+func (container *config.Container) statPath(resolvedPath, absPath string) (stat *types.ContainerPathStat, err error) {
 	lstat, err := os.Lstat(resolvedPath)
 	if err != nil {
 		return nil, err
@@ -132,7 +134,7 @@ func (container *Container) statPath(resolvedPath, absPath string) (stat *types.
 
 // StatPath stats the filesystem resource at the specified path in this
 // container. Returns stat info about the resource.
-func (container *Container) StatPath(path string) (stat *types.ContainerPathStat, err error) {
+func (container *config.Container) StatPath(path string) (stat *types.ContainerPathStat, err error) {
 	container.Lock()
 	defer container.Unlock()
 
@@ -158,7 +160,7 @@ func (container *Container) StatPath(path string) (stat *types.ContainerPathStat
 // ArchivePath creates an archive of the filesystem resource at the specified
 // path in this container. Returns a tar archive of the resource and stat info
 // about the resource.
-func (container *Container) ArchivePath(path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error) {
+func (container *config.Container) ArchivePath(path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error) {
 	container.Lock()
 
 	defer func() {
@@ -229,7 +231,7 @@ func (container *Container) ArchivePath(path string) (content io.ReadCloser, sta
 // noOverwriteDirNonDir is true then it will be an error if unpacking the
 // given content would cause an existing directory to be replaced with a non-
 // directory and vice versa.
-func (container *Container) ExtractToDir(path string, noOverwriteDirNonDir bool, content io.Reader) (err error) {
+func (container *config.Container) ExtractToDir(path string, noOverwriteDirNonDir bool, content io.Reader) (err error) {
 	container.Lock()
 	defer container.Unlock()
 

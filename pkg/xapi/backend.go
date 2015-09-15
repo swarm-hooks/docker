@@ -14,7 +14,7 @@ type Backend interface {
 	// NetworkApiRouter()
 
 	// interesting inconsistency, Container, Container, ContainerJSON
-	Get(prefixOrName string) (*config.Container, error)
+	Get(prefixOrName string) (*config.Container, error)  // I think maybe this shouldn't be something exported and used.
 	Containers(*config.ContainersConfig) ([]*types.Container, error)
 	ContainerInspect(name string) (*types.ContainerJSON, error)
 

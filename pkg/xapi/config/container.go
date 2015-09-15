@@ -35,8 +35,8 @@ type CommonContainer struct {
 	HasBeenStartedBefore     bool
 	hostConfig               *runconfig.HostConfig
 	command                  *types.Command
-	monitor                  *containerMonitor
-	execCommands             *execStore
+	monitor                  *ContainerMonitor
+	execCommands             *ExecStore
 	//daemon                   *Backend
 	// logDriver for closing
 	logDriver Logger
@@ -74,12 +74,12 @@ type State struct {
 	waitChan          chan struct{}
 }
 
-// containerMonitor monitors the execution of a container's main process.
+// ContainerMonitor monitors the execution of a container's main process.
 // If a restart policy is specified for the container the monitor will ensure that the
 // process is restarted based on the rules of the policy.  When the container is finally stopped
 // the monitor will reset and cleanup any of the container resources such as networking allocations
 // and the rootfs
-type containerMonitor struct {
+type ContainerMonitor struct {
 	mux sync.Mutex
 
 	// container is the container being monitored
