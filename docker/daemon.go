@@ -13,7 +13,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/uuid"
-	apiserver "github.com/docker/docker/api/server"
 	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cliconfig"
@@ -26,6 +25,7 @@ import (
 	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/timeutils"
 	"github.com/docker/docker/pkg/tlsconfig"
+	apiserver "github.com/docker/docker/pkg/xapi/server"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
 )

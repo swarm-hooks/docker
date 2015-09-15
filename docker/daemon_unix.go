@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	apiserver "github.com/docker/docker/api/server"
+	apiserver "github.com/docker/docker/pkg/xapi/server"
 	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/system"
 
