@@ -1,12 +1,14 @@
+// Package types is used for API stability in the types and response to the
+// consumers of the API stats endpoint.
 package types
 
 import (
 	"os"
 	"time"
 
-	"github.com/docker/docker/daemon/network"
+	"github.com/docker/docker/daemon/network" // needs to be moved here (network config struct)
 	"github.com/docker/docker/pkg/version"
-	"github.com/docker/docker/runconfig"
+	"github.com/docker/docker/runconfig" // move to here or other package (container configuration)
 )
 
 // ContainerCreateResponse contains the information returned to a client on the
