@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/graph/tags"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/runconfig"
 	"github.com/opencontainers/runc/libcontainer/label"
 )

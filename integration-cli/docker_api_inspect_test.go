@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	
 	"github.com/docker/docker/pkg/stringutils"
 	"github.com/go-check/check"
 )

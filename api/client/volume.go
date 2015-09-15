@@ -9,11 +9,11 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/docker/docker/api/types"
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/opts"
 	flag "github.com/docker/docker/pkg/mflag"
 	"github.com/docker/docker/pkg/parsers/filters"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // CmdVolume is the parent subcommand for all volume commands

@@ -382,15 +382,12 @@ func createRouter(s *Server) *mux.Router {
 			"/containers/json":                s.getContainersJSON,
 			"/containers/{name:.*}/export":    s.getContainersExport,
 			"/containers/{name:.*}/changes":   s.getContainersChanges,
-			"/containers/{name:.*}/json":      s.getContainersByName,
 			"/containers/{name:.*}/top":       s.getContainersTop,
 			"/containers/{name:.*}/logs":      s.getContainersLogs,
 			"/containers/{name:.*}/stats":     s.getContainersStats,
 			"/containers/{name:.*}/attach/ws": s.wsContainersAttach,
 			"/exec/{id:.*}/json":              s.getExecByID,
 			"/containers/{name:.*}/archive":   s.getContainersArchive,
-			"/volumes":                        s.getVolumesList,
-			"/volumes/{name:.*}":              s.getVolumeByName,
 		},
 		"POST": {
 			"/auth":                         s.postAuth,
@@ -415,7 +412,6 @@ func createRouter(s *Server) *mux.Router {
 			"/exec/{name:.*}/start":         s.postContainerExecStart,
 			"/exec/{name:.*}/resize":        s.postContainerExecResize,
 			"/containers/{name:.*}/rename":  s.postContainerRename,
-			"/volumes":                      s.postVolumesCreate,
 		},
 		"PUT": {
 			"/containers/{name:.*}/archive": s.putContainersArchive,
@@ -423,7 +419,6 @@ func createRouter(s *Server) *mux.Router {
 		"DELETE": {
 			"/containers/{name:.*}": s.deleteContainers,
 			"/images/{name:.*}":     s.deleteImages,
-			"/volumes/{name:.*}":    s.deleteVolumes,
 		},
 		"OPTIONS": {
 			"": s.optionsHandler,

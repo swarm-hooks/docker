@@ -10,9 +10,10 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
+
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/system"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/volume"
 	"github.com/docker/docker/volume/drivers"
 )

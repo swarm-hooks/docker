@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/parsers/filters"
 	"github.com/docker/docker/pkg/parsers/kernel"
-	"github.com/docker/docker/pkg/version"
 	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/utils"
 )

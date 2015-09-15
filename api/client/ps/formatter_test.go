@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	
 )
 
 func TestFormat(t *testing.T) {
