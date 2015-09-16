@@ -9,16 +9,18 @@ import (
 // all the stuff a server wants
 type Backend interface {
 	SystemInfo() (*types.Info, error)
+	//ContainerStart(name string, hostConfig *runconfig.HostConfig) error
 	// NetworkApiRouter()
 
-	// Get(string) // get container
+	// Get(string) // get container NO
+	Exists(id string) bool
 	// ContainerCopy(string, string)
 	// ContainerStatPath(string, string)
 	// ContainerArchivePath(string, string)
 	// ContainerExtractToDir(string, string, bool, io.Reader)
 	// ContainerInspect(string)
 	// Containers(config)
-	// ContainerStats(string, config)
+	ContainerStats(prefixOrName string, config *ContainerStatsConfig) error
 	// ContainerLogs(c, logsConfig)
 	// ContainerExport(string, w)
 	// ContainerStart(string, hostConfig)
