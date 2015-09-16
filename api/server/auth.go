@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/context"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/context"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // ContainerInspect returns low-level information about a

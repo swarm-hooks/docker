@@ -3,8 +3,8 @@
 package daemon
 
 import (
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/context"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 // This sets platform-specific fields

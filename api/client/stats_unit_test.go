@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 func TestDisplay(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	"os"
 )
 

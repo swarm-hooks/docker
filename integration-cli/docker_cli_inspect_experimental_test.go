@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/xapi/types"
 	"github.com/go-check/check"
 )
 

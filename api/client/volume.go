@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/xapi/types"
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/opts"
 	flag "github.com/docker/docker/pkg/mflag"

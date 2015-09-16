@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/integration"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/runconfig"
 	"github.com/go-check/check"
 )

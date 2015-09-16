@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/context"
+	"github.com/docker/docker/pkg/xapi/types"
 )
 
 func (s *Server) getVolumesList(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
