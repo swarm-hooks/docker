@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -10,29 +11,49 @@ import (
 type ContainerAttachWithLogsConfig struct {
 	InStream                       io.ReadCloser
 	OutStream                      io.Writer
+	ErrStream                      io.Writer
+	SetupStreams                   func() (io.ReadCloser, io.Writer, error)
 	UseStdin, UseStdout, UseStderr bool
 	Logs, Stream                   bool
 }
 
 // ContainerAttachWithLogs attaches to logs according to the config passed in. See ContainerAttachWithLogsConfig.
-func (daemon *Daemon) ContainerAttachWithLogs(container *Container, c *ContainerAttachWithLogsConfig) error {
+func (daemon *Daemon) ContainerAttachWithLogs(prefixOrName string, c *ContainerAttachWithLogsConfig) error {
+	container, err := daemon.Get(prefixOrName)
+	if err != nil {
+		return err
+	}
+
 	var errStream io.Writer
 
+	if nil == c.SetupStreams {
+		return fmt.Errorf("no streams to set up connection")
+	}
+
+	InStream, OutStream, err := c.SetupStreams()
+	// overwrite streams if we changed them to pass back to the calling context
+	c.InStream = InStream
+	c.OutStream = OutStream
+
+	if nil != err {
+		return err
+	}
+
 	if !container.Config.Tty {
-		errStream = stdcopy.NewStdWriter(c.OutStream, stdcopy.Stderr)
-		c.OutStream = stdcopy.NewStdWriter(c.OutStream, stdcopy.Stdout)
+		errStream = stdcopy.NewStdWriter(OutStream, stdcopy.Stderr)
+		OutStream = stdcopy.NewStdWriter(OutStream, stdcopy.Stdout)
 	} else {
-		errStream = c.OutStream
+		errStream = OutStream
 	}
 
 	var stdin io.ReadCloser
 	var stdout, stderr io.Writer
 
 	if c.UseStdin {
-		stdin = c.InStream
+		stdin = InStream
 	}
 	if c.UseStdout {
-		stdout = c.OutStream
+		stdout = OutStream
 	}
 	if c.UseStderr {
 		stderr = errStream
@@ -50,6 +71,10 @@ type ContainerWsAttachWithLogsConfig struct {
 }
 
 // ContainerWsAttachWithLogs websocket connection
-func (daemon *Daemon) ContainerWsAttachWithLogs(container *Container, c *ContainerWsAttachWithLogsConfig) error {
+func (daemon *Daemon) ContainerWsAttachWithLogs(prefixOrName string, c *ContainerWsAttachWithLogsConfig) error {
+	container, err := daemon.Get(prefixOrName)
+	if err != nil {
+		return err
+	}
 	return container.attachWithLogs(c.InStream, c.OutStream, c.ErrStream, c.Logs, c.Stream)
 }

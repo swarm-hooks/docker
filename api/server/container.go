@@ -445,36 +445,39 @@ func (s *Server) postContainersAttach(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("Missing parameter")
 	}
 
-	cont, err := s.daemon.Get(vars["name"])
-	if err != nil {
-		return err
-	}
+	streamSetup := func() (io.ReadCloser, io.Writer, error) {
+		inStream, outStream, err := hijackServer(w)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	inStream, outStream, err := hijackServer(w)
-	if err != nil {
-		return err
-	}
-	defer closeStreams(inStream, outStream)
-
-	if _, ok := r.Header["Upgrade"]; ok {
-		fmt.Fprintf(outStream, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n")
-	} else {
-		fmt.Fprintf(outStream, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
+		if _, ok := r.Header["Upgrade"]; ok {
+			fmt.Fprintf(outStream, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n")
+		} else {
+			fmt.Fprintf(outStream, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
+		}
+		return inStream, outStream, nil
 	}
 
 	attachWithLogsConfig := &daemon.ContainerAttachWithLogsConfig{
-		InStream:  inStream,
-		OutStream: outStream,
-		UseStdin:  boolValue(r, "stdin"),
-		UseStdout: boolValue(r, "stdout"),
-		UseStderr: boolValue(r, "stderr"),
-		Logs:      boolValue(r, "logs"),
-		Stream:    boolValue(r, "stream"),
+		SetupStreams: streamSetup,
+		UseStdin:     boolValue(r, "stdin"),
+		UseStdout:    boolValue(r, "stdout"),
+		UseStderr:    boolValue(r, "stderr"),
+		Logs:         boolValue(r, "logs"),
+		Stream:       boolValue(r, "stream"),
 	}
 
-	if err := s.daemon.ContainerAttachWithLogs(cont, attachWithLogsConfig); err != nil {
-		fmt.Fprintf(outStream, "Error attaching: %s\n", err)
+	if err := s.daemon.ContainerAttachWithLogs(vars["name"], attachWithLogsConfig); err != nil {
+		logrus.Warnf("Error attaching: %s", err)
+		if errc, ok := err.(errcode.Error); ok && errc.ErrorCode() == derr.ErrorCodeNoSuchContainer {
+			// not hijacked, let the standard handler take care of it
+			// http.Error(w, errc.Message, errc.ErrorCode().Descriptor().HTTPStatusCode)
+			return err
+		}
+		fmt.Fprintf(attachWithLogsConfig.OutStream, "Error attaching: %s\n", err)
 	}
+	closeStreams(attachWithLogsConfig.InStream, attachWithLogsConfig.OutStream)
 
 	return nil
 }
@@ -485,11 +488,6 @@ func (s *Server) wsContainersAttach(ctx context.Context, w http.ResponseWriter, 
 	}
 	if vars == nil {
 		return fmt.Errorf("Missing parameter")
-	}
-
-	cont, err := s.daemon.Get(vars["name"])
-	if err != nil {
-		return err
 	}
 
 	h := websocket.Handler(func(ws *websocket.Conn) {
@@ -503,7 +501,7 @@ func (s *Server) wsContainersAttach(ctx context.Context, w http.ResponseWriter, 
 			Stream:    boolValue(r, "stream"),
 		}
 
-		if err := s.daemon.ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig); err != nil {
+		if err := s.daemon.ContainerWsAttachWithLogs(vars["name"], wsAttachWithLogsConfig); err != nil {
 			logrus.Errorf("Error attaching websocket: %s", err)
 		}
 	})
