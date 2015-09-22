@@ -1,7 +1,13 @@
 package xapi
 
 import (
-	//"time"
+	"io"
+	"time"
+
+	// everything from here needs to move to types
+	// consists mainly of XYZConfig structs to pass information
+	"github.com/docker/docker/daemon"
+
 	"github.com/docker/docker/pkg/xapi/types"
 )
 
@@ -20,18 +26,19 @@ type Backend interface {
 	// ContainerExtractToDir(string, string, bool, io.Reader)
 	// ContainerInspect(string)
 	// Containers(config)
-	ContainerStats(prefixOrName string, config *ContainerStatsConfig) error
+	ContainerStats(prefixOrName string, config *daemon.ContainerStatsConfig) error
 	// ContainerLogs(c, logsConfig)
-	// ContainerExport(string, w)
+	ContainerExport(name string, out io.Writer) error
 	// ContainerStart(string, hostConfig)
 	// ContainerStop(string, seconds)
 	// ContainerKill(name, sig)
-	// ContainerRestart(string, timeout)
-	// ContainerPause(string)
-	// ContainerUnpause(string)
-	// ContainerWait(string, time.duration)
+	// ContainerRestart(string,
+	ContainerPause(name string) error
+	ContainerUnpause(name string) error
+	ContainerWait(name string, timeout time.Duration) (int, error)
 	// ContainerChanges(string)
 	// ContainerTop(string, string)
+	ContainerTop(name string, psArgs string) (*types.ContainerProcessList, error)
 	// ContainerRename(name, newName)
 	// ContainerCreate(name, config, hostConfig)
 	// ContainerRm(name, config)

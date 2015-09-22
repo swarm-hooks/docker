@@ -156,7 +156,7 @@ func (s *Server) getContainersExport(ctx context.Context, w http.ResponseWriter,
 		return fmt.Errorf("Missing parameter")
 	}
 
-	return s.daemon.ContainerExport(ctx, vars["name"], w)
+	return s.impl.ContainerExport(ctx, vars["name"], w)
 }
 
 func (s *Server) postContainersStart(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -272,7 +272,7 @@ func (s *Server) postContainersPause(ctx context.Context, w http.ResponseWriter,
 		return err
 	}
 
-	if err := s.daemon.ContainerPause(ctx, vars["name"]); err != nil {
+	if err := s.impl.ContainerPause(ctx, vars["name"]); err != nil {
 		return err
 	}
 
@@ -289,7 +289,7 @@ func (s *Server) postContainersUnpause(ctx context.Context, w http.ResponseWrite
 		return err
 	}
 
-	if err := s.daemon.ContainerUnpause(ctx, vars["name"]); err != nil {
+	if err := s.impl.ContainerUnpause(ctx, vars["name"]); err != nil {
 		return err
 	}
 
@@ -303,7 +303,7 @@ func (s *Server) postContainersWait(ctx context.Context, w http.ResponseWriter, 
 		return fmt.Errorf("Missing parameter")
 	}
 
-	status, err := s.daemon.ContainerWait(ctx, vars["name"], -1*time.Second)
+	status, err := s.impl.ContainerWait(ctx, vars["name"], -1*time.Second)
 	if err != nil {
 		return err
 	}
@@ -335,7 +335,7 @@ func (s *Server) getContainersTop(ctx context.Context, w http.ResponseWriter, r 
 		return err
 	}
 
-	procList, err := s.daemon.ContainerTop(ctx, vars["name"], r.Form.Get("ps_args"))
+	procList, err := s.impl.ContainerTop(ctx, vars["name"], r.Form.Get("ps_args"))
 	if err != nil {
 		return err
 	}
