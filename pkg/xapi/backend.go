@@ -7,6 +7,7 @@ import (
 	// everything from here needs to move to types
 	// consists mainly of XYZConfig structs to pass information
 	"github.com/docker/docker/daemon"
+	"github.com/docker/docker/runconfig"
 
 	"github.com/docker/docker/pkg/xapi/types"
 )
@@ -25,6 +26,10 @@ type Backend interface {
 	// ContainerArchivePath(string, string)
 	// ContainerExtractToDir(string, string, bool, io.Reader)
 	// ContainerInspect(string)
+	ContainerInspect(name string) (*types.ContainerJSON, error)
+	ContainerInspect120(name string) (*types.ContainerJSON120, error)
+	ContainerInspectPre120(name string) (*types.ContainerJSONPre120, error)
+
 	// Containers(config)
 	ContainerStats(prefixOrName string, config *daemon.ContainerStatsConfig) error
 	// ContainerLogs(c, logsConfig)
@@ -37,20 +42,20 @@ type Backend interface {
 	ContainerUnpause(name string) error
 	ContainerWait(name string, timeout time.Duration) (int, error)
 	// ContainerChanges(string)
-	// ContainerTop(string, string)
 	ContainerTop(name string, psArgs string) (*types.ContainerProcessList, error)
 	// ContainerRename(name, newName)
 	// ContainerCreate(name, config, hostConfig)
 	// ContainerRm(name, config)
-	// ContainerResize(string, height, width)
+	ContainerResize(name string, height, width int) error
+	ContainerExecResize(name string, height, width int) error
+
 	// ContainerAttachWithLogs(cont, attachWithLogsConfig)
 	// ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig)
 
-	// ContainerExecInspect(string)
-	// ContainerExecCreate(execConfig)
-	// ContainerExecStart(execName, stdin, stdout, stderr)
-	// ContainerExecResize(string, height, width)
-
+	ContainerExecStart(execName string, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) error
+	// two different versions of ExecConfig, oi vey!
+	ContainerExecCreate(config *runconfig.ExecConfig) (string, error)
+	ContainerExecInspect(id string) (*daemon.ExecConfig, error)
 	// Repositories()
 
 	// ContainerAttachWithLogs(cont, attachWithLogsConfig)
@@ -65,4 +70,5 @@ type Backend interface {
 	// EventsService
 	// RegistryService
 	// ContainerInspectPre120(namevar)
+	VolumeInspect(name string) (*types.Volume, error)
 }

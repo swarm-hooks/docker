@@ -430,7 +430,7 @@ func (s *Server) postContainersResize(ctx context.Context, w http.ResponseWriter
 		return err
 	}
 
-	return s.daemon.ContainerResize(ctx, vars["name"], height, width)
+	return s.impl.ContainerResize(ctx, vars["name"], height, width)
 }
 
 func (s *Server) postContainersAttach(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
