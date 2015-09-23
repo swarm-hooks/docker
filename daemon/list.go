@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/context"
 	derr "github.com/docker/docker/errors"
 	"github.com/docker/docker/image"

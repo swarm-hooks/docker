@@ -46,7 +46,7 @@ func (s *Server) getContainersJSON(ctx context.Context, w http.ResponseWriter, r
 		config.Limit = limit
 	}
 
-	containers, err := s.daemon.Containers(ctx, config)
+	containers, err := s.impl.Containers(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -400,7 +400,7 @@ func (s *Server) deleteContainers(ctx context.Context, w http.ResponseWriter, r 
 		RemoveLink:   boolValue(r, "link"),
 	}
 
-	if err := s.daemon.ContainerRm(ctx, name, config); err != nil {
+	if err := s.impl.ContainerRm(ctx, name, config); err != nil {
 		// Force a 404 for the empty string
 		if strings.Contains(strings.ToLower(err.Error()), "prefix can't be empty") {
 			return fmt.Errorf("no such id: \"\"")
