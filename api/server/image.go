@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/context"
@@ -19,6 +18,7 @@ import (
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/pkg/ulimit"
+	"github.com/docker/docker/pkg/xapi/types"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
 )
@@ -243,7 +243,7 @@ func (s *Server) deleteImages(ctx context.Context, w http.ResponseWriter, r *htt
 	force := boolValue(r, "force")
 	prune := !boolValue(r, "noprune")
 
-	list, err := s.daemon.ImageDelete(ctx, name, force, prune)
+	list, err := s.impl.ImageDelete(ctx, name, force, prune)
 	if err != nil {
 		return err
 	}

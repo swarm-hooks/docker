@@ -19,12 +19,13 @@ type Backend interface {
 	//ContainerStart(name string, hostConfig *runconfig.HostConfig) error
 	// NetworkApiRouter()
 
-	// Get(string) // get container NO
 	Exists(id string) bool
-	// ContainerCopy(string, string)
-	// ContainerStatPath(string, string)
-	// ContainerArchivePath(string, string)
-	// ContainerExtractToDir(string, string, bool, io.Reader)
+
+	ContainerCopy(name string, res string) (io.ReadCloser, error)
+	ContainerStatPath(name string, path string) (stat *types.ContainerPathStat, err error)
+	ContainerArchivePath(name string, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error)
+	ContainerExtractToDir(name, path string, noOverwriteDirNonDir bool, content io.Reader) error
+
 	// ContainerInspect(string)
 	ContainerInspect(name string) (*types.ContainerJSON, error)
 	ContainerInspect120(name string) (*types.ContainerJSON120, error)
@@ -67,7 +68,7 @@ type Backend interface {
 	// ContainerExecResize(string, height, width)
 
 	// NetworkApiRouter()
-	// ImageDelete(name, force, noprune)
+	ImageDelete(imageRef string, force, prune bool) ([]types.ImageDelete, error)
 	// EventsService
 	// RegistryService
 

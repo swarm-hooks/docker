@@ -32,7 +32,7 @@ func (s *Server) postContainersCopy(ctx context.Context, w http.ResponseWriter, 
 		return fmt.Errorf("Path cannot be empty")
 	}
 
-	data, err := s.daemon.ContainerCopy(ctx, vars["name"], cfg.Resource)
+	data, err := s.impl.ContainerCopy(ctx, vars["name"], cfg.Resource)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "no such id") {
 			w.WriteHeader(http.StatusNotFound)
@@ -74,7 +74,7 @@ func (s *Server) headContainersArchive(ctx context.Context, w http.ResponseWrite
 		return err
 	}
 
-	stat, err := s.daemon.ContainerStatPath(ctx, v.name, v.path)
+	stat, err := s.impl.ContainerStatPath(ctx, v.name, v.path)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (s *Server) getContainersArchive(ctx context.Context, w http.ResponseWriter
 		return err
 	}
 
-	tarArchive, stat, err := s.daemon.ContainerArchivePath(ctx, v.name, v.path)
+	tarArchive, stat, err := s.impl.ContainerArchivePath(ctx, v.name, v.path)
 	if err != nil {
 		return err
 	}
@@ -111,5 +111,5 @@ func (s *Server) putContainersArchive(ctx context.Context, w http.ResponseWriter
 	}
 
 	noOverwriteDirNonDir := boolValue(r, "noOverwriteDirNonDir")
-	return s.daemon.ContainerExtractToDir(ctx, v.name, v.path, noOverwriteDirNonDir, r.Body)
+	return s.impl.ContainerExtractToDir(ctx, v.name, v.path, noOverwriteDirNonDir, r.Body)
 }
