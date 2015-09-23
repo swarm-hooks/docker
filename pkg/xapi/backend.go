@@ -73,8 +73,8 @@ type Backend interface {
 	// EventsService
 	// RegistryService
 
-	// Create(config *runconfig.Config, hostConfig *runconfig.HostConfig, name string) (retC *Container, retS []string, retErr error)
-
+	Volumes(filter string) ([]*types.Volume, error)
 	VolumeInspect(name string) (*types.Volume, error)
 	VolumeCreate(name, driverName string, opts map[string]string) (*types.Volume, error)
+	VolumeRm(name string) error
 }
