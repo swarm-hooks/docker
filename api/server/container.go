@@ -353,7 +353,7 @@ func (s *Server) postContainerRename(ctx context.Context, w http.ResponseWriter,
 
 	name := vars["name"]
 	newName := r.Form.Get("name")
-	if err := s.daemon.ContainerRename(ctx, name, newName); err != nil {
+	if err := s.impl.ContainerRename(ctx, name, newName); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)

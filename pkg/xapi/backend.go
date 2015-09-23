@@ -43,7 +43,8 @@ type Backend interface {
 	ContainerWait(name string, timeout time.Duration) (int, error)
 	// ContainerChanges(string)
 	ContainerTop(name string, psArgs string) (*types.ContainerProcessList, error)
-	// ContainerRename(name, newName)
+	ContainerRename(oldName, newName string) error
+
 	// ContainerCreate(name, config, hostConfig)
 	// ContainerRm(name, config)
 	ContainerResize(name string, height, width int) error
@@ -69,6 +70,9 @@ type Backend interface {
 	// ImageDelete(name, force, noprune)
 	// EventsService
 	// RegistryService
-	// ContainerInspectPre120(namevar)
+
+	// Create(config *runconfig.Config, hostConfig *runconfig.HostConfig, name string) (retC *Container, retS []string, retErr error)
+
 	VolumeInspect(name string) (*types.Volume, error)
+	VolumeCreate(name, driverName string, opts map[string]string) (*types.Volume, error)
 }
