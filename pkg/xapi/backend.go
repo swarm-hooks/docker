@@ -10,6 +10,8 @@ import (
 	"github.com/docker/docker/runconfig"
 
 	"github.com/docker/docker/pkg/xapi/types"
+
+	"github.com/docker/docker/pkg/archive"
 )
 
 // Backend is all the methods that need to be implemented to provide
@@ -43,7 +45,9 @@ type Backend interface {
 	ContainerPause(name string) error
 	ContainerUnpause(name string) error
 	ContainerWait(name string, timeout time.Duration) (int, error)
-	// ContainerChanges(string)
+
+	ContainerChanges(name string) ([]archive.Change, error)
+
 	ContainerTop(name string, psArgs string) (*types.ContainerProcessList, error)
 	ContainerRename(oldName, newName string) error
 

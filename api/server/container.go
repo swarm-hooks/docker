@@ -318,7 +318,7 @@ func (s *Server) getContainersChanges(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("Missing parameter")
 	}
 
-	changes, err := s.daemon.ContainerChanges(ctx, vars["name"])
+	changes, err := s.impl.ContainerChanges(ctx, vars["name"])
 	if err != nil {
 		return err
 	}
