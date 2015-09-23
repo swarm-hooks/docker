@@ -35,10 +35,11 @@ type Backend interface {
 	ContainerStats(prefixOrName string, config *daemon.ContainerStatsConfig) error
 	// ContainerLogs(c, logsConfig)
 	ContainerExport(name string, out io.Writer) error
-	// ContainerStart(string, hostConfig)
-	// ContainerStop(string, seconds)
-	// ContainerKill(name, sig)
-	// ContainerRestart(string,
+
+	ContainerStart(name string, hostConfig *runconfig.HostConfig) error
+	ContainerStop(name string, seconds int) error
+	ContainerKill(name string, sig uint64) error
+	ContainerRestart(name string, seconds int) error
 	ContainerPause(name string) error
 	ContainerUnpause(name string) error
 	ContainerWait(name string, timeout time.Duration) (int, error)

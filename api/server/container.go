@@ -184,7 +184,7 @@ func (s *Server) postContainersStart(ctx context.Context, w http.ResponseWriter,
 		hostConfig = c
 	}
 
-	if err := s.daemon.ContainerStart(ctx, vars["name"], hostConfig); err != nil {
+	if err := s.impl.ContainerStart(ctx, vars["name"], hostConfig); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -201,7 +201,7 @@ func (s *Server) postContainersStop(ctx context.Context, w http.ResponseWriter, 
 
 	seconds, _ := strconv.Atoi(r.Form.Get("t"))
 
-	if err := s.daemon.ContainerStop(ctx, vars["name"], seconds); err != nil {
+	if err := s.impl.ContainerStop(ctx, vars["name"], seconds); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -228,7 +228,7 @@ func (s *Server) postContainersKill(ctx context.Context, w http.ResponseWriter, 
 		}
 	}
 
-	if err := s.daemon.ContainerKill(ctx, name, uint64(sig)); err != nil {
+	if err := s.impl.ContainerKill(ctx, name, uint64(sig)); err != nil {
 		theErr, isDerr := err.(errcode.ErrorCoder)
 		isStopped := isDerr && theErr.ErrorCode() == derr.ErrorCodeNotRunning
 
@@ -255,7 +255,7 @@ func (s *Server) postContainersRestart(ctx context.Context, w http.ResponseWrite
 
 	timeout, _ := strconv.Atoi(r.Form.Get("t"))
 
-	if err := s.daemon.ContainerRestart(ctx, vars["name"], timeout); err != nil {
+	if err := s.impl.ContainerRestart(ctx, vars["name"], timeout); err != nil {
 		return err
 	}
 
