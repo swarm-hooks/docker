@@ -19,7 +19,6 @@ import (
 type Backend interface {
 	SystemInfo() (*types.Info, error)
 	//ContainerStart(name string, hostConfig *runconfig.HostConfig) error
-	// NetworkApiRouter()
 
 	Exists(id string) bool
 
