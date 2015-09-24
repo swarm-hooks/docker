@@ -442,7 +442,7 @@ func (s *Server) postContainersAttach(ctx context.Context, w http.ResponseWriter
 	}
 	containerName := vars["name"]
 
-	if !s.daemon.Exists(ctx, containerName) {
+	if !s.impl.Exists(ctx, containerName) {
 		return derr.ErrorCodeNoSuchContainer.WithArgs(containerName)
 	}
 
@@ -468,7 +468,7 @@ func (s *Server) postContainersAttach(ctx context.Context, w http.ResponseWriter
 		Stream:    boolValue(r, "stream"),
 	}
 
-	if err := s.daemon.ContainerAttachWithLogs(ctx, containerName, attachWithLogsConfig); err != nil {
+	if err := s.impl.ContainerAttachWithLogs(ctx, containerName, attachWithLogsConfig); err != nil {
 		fmt.Fprintf(outStream, "Error attaching: %s\n", err)
 	}
 
@@ -484,7 +484,7 @@ func (s *Server) wsContainersAttach(ctx context.Context, w http.ResponseWriter, 
 	}
 	containerName := vars["name"]
 
-	if !s.daemon.Exists(ctx, containerName) {
+	if !s.impl.Exists(ctx, containerName) {
 		return derr.ErrorCodeNoSuchContainer.WithArgs(containerName)
 	}
 
@@ -499,7 +499,7 @@ func (s *Server) wsContainersAttach(ctx context.Context, w http.ResponseWriter, 
 			Stream:    boolValue(r, "stream"),
 		}
 
-		if err := s.daemon.ContainerWsAttachWithLogs(ctx, containerName, wsAttachWithLogsConfig); err != nil {
+		if err := s.impl.ContainerWsAttachWithLogs(ctx, containerName, wsAttachWithLogsConfig); err != nil {
 			logrus.Errorf("Error attaching websocket: %s", err)
 		}
 	})

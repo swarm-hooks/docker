@@ -57,17 +57,14 @@ type Backend interface {
 	ContainerResize(ctx context.Context, name string, height, width int) error
 	ContainerExecResize(ctx context.Context, name string, height, width int) error
 
-	// ContainerAttachWithLogs(cont, attachWithLogsConfig)
-	// ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig)
+	ContainerAttachWithLogs(ctx context.Context, prefixOrName string, c *daemon.ContainerAttachWithLogsConfig) error
+	ContainerWsAttachWithLogs(ctx context.Context, prefixOrName string, c *daemon.ContainerWsAttachWithLogsConfig) error
 
 	ContainerExecStart(ctx context.Context, execName string, stdin io.ReadCloser, stdout io.Writer, stderr io.Writer) error
 	// two different versions of ExecConfig, oi vey!
 	ContainerExecCreate(ctx context.Context, config *runconfig.ExecConfig) (string, error)
 	ContainerExecInspect(ctx context.Context, id string) (*daemon.ExecConfig, error)
 	// Repositories()
-
-	// ContainerAttachWithLogs(cont, attachWithLogsConfig)
-	// ContainerWsAttachWithLogs(cont, wsAttachWithLogsConfig)
 
 	// NetworkApiRouter()
 	ImageDelete(ctx context.Context, imageRef string, force, prune bool) ([]types.ImageDelete, error)
