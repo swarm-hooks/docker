@@ -52,7 +52,8 @@ type Backend interface {
 	ContainerTop(ctx context.Context, name string, psArgs string) (*types.ContainerProcessList, error)
 	ContainerRename(ctx context.Context, oldName, newName string) error
 
-	// ContainerCreate(name, config, hostConfig)
+	ContainerCreate(ctx context.Context, name string, config *runconfig.Config, hostConfig *runconfig.HostConfig, adjustCPUShares bool) (types.ContainerCreateResponse, error)
+
 	ContainerRm(ctx context.Context, name string, config *daemon.ContainerRmConfig) error
 	ContainerResize(ctx context.Context, name string, height, width int) error
 	ContainerExecResize(ctx context.Context, name string, height, width int) error

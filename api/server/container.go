@@ -377,7 +377,7 @@ func (s *Server) postContainersCreate(ctx context.Context, w http.ResponseWriter
 	version := ctx.Version()
 	adjustCPUShares := version.LessThan("1.19")
 
-	ccr, err := s.daemon.ContainerCreate(ctx, name, config, hostConfig, adjustCPUShares)
+	ccr, err := s.impl.ContainerCreate(ctx, name, config, hostConfig, adjustCPUShares)
 	if err != nil {
 		return err
 	}
