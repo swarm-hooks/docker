@@ -18,8 +18,12 @@ import (
 // Backend is all the methods that need to be implemented to provide
 // all the stuff a server wants
 type Backend interface {
+	// EventsService
+	// RegistryService
+	// Repositories()
+	// NetworkApiRouter()
+
 	SystemInfo(ctx context.Context) (*types.Info, error)
-	//ContainerStart(name string, hostConfig *runconfig.HostConfig) error
 
 	Exists(ctx context.Context, id string) bool
 
@@ -28,12 +32,10 @@ type Backend interface {
 	ContainerArchivePath(ctx context.Context, name string, path string) (content io.ReadCloser, stat *types.ContainerPathStat, err error)
 	ContainerExtractToDir(ctx context.Context, name, path string, noOverwriteDirNonDir bool, content io.Reader) error
 
-	// ContainerInspect(string)
 	ContainerInspect(ctx context.Context, name string) (*types.ContainerJSON, error)
 	ContainerInspect120(ctx context.Context, name string) (*types.ContainerJSON120, error)
 	ContainerInspectPre120(ctx context.Context, name string) (*types.ContainerJSONPre120, error)
 
-	// Containers(config)
 	Containers(ctx context.Context, config *daemon.ContainersConfig) ([]*types.Container, error)
 	ContainerStats(ctx context.Context, prefixOrName string, config *daemon.ContainerStatsConfig) error
 	// ContainerLogs(c, logsConfig)
@@ -65,12 +67,8 @@ type Backend interface {
 	// two different versions of ExecConfig, oi vey!
 	ContainerExecCreate(ctx context.Context, config *runconfig.ExecConfig) (string, error)
 	ContainerExecInspect(ctx context.Context, id string) (*daemon.ExecConfig, error)
-	// Repositories()
 
-	// NetworkApiRouter()
 	ImageDelete(ctx context.Context, imageRef string, force, prune bool) ([]types.ImageDelete, error)
-	// EventsService
-	// RegistryService
 
 	Volumes(ctx context.Context, filter string) ([]*types.Volume, error)
 	VolumeInspect(ctx context.Context, name string) (*types.Volume, error)
