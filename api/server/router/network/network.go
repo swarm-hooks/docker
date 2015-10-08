@@ -6,21 +6,18 @@ import (
 	"github.com/docker/docker/api/server/httputils"
 	"github.com/docker/docker/api/server/router"
 	"github.com/docker/docker/api/server/router/local"
-	"github.com/docker/docker/daemon"
-	"github.com/docker/docker/errors"
-	"golang.org/x/net/context"
 )
 
 // networkRouter is a router to talk with the network controller
 type networkRouter struct {
-	daemon *daemon.Daemon
+	impl   router.Backend
 	routes []router.Route
 }
 
 // NewRouter initializes a new network router
-func NewRouter(d *daemon.Daemon) router.Router {
+func NewRouter(b router.Backend) router.Router {
 	r := &networkRouter{
-		daemon: d,
+		impl: b,
 	}
 	r.initRoutes()
 	return r

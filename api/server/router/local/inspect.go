@@ -18,11 +18,11 @@ func (s *router) getContainersByName(ctx context.Context, w http.ResponseWriter,
 
 	switch {
 	case version.LessThan("1.20"):
-		json, err = s.daemon.ContainerInspectPre120(vars["name"])
+		json, err = s.impl.ContainerInspectPre120(vars["name"])
 	case version.Equal("1.20"):
-		json, err = s.daemon.ContainerInspect120(vars["name"])
+		json, err = s.impl.ContainerInspect120(vars["name"])
 	default:
-		json, err = s.daemon.ContainerInspect(vars["name"], displaySize)
+		json, err = s.impl.ContainerInspect(vars["name"], displaySize)
 	}
 
 	if err != nil {

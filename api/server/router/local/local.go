@@ -13,6 +13,7 @@ import (
 // router is a docker router that talks with the local docker daemon.
 type router struct {
 	daemon *daemon.Daemon
+	impl   dkrouter.Backend
 	routes []dkrouter.Route
 }
 
@@ -78,6 +79,7 @@ func NewHeadRoute(path string, handler httputils.APIFunc) dkrouter.Route {
 func NewRouter(daemon *daemon.Daemon) dkrouter.Router {
 	r := &router{
 		daemon: daemon,
+		impl:   daemon,
 	}
 	r.initRoutes()
 	return r

@@ -44,7 +44,7 @@ func (s *router) getVersion(ctx context.Context, w http.ResponseWriter, r *http.
 }
 
 func (s *router) getInfo(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-	info, err := s.daemon.SystemInfo()
+	info, err := s.impl.SystemInfo()
 	if err != nil {
 		return err
 	}
@@ -89,10 +89,10 @@ func (s *router) getEvents(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	enc := buildOutputEncoder(w)
 
-	current, l, cancel := s.daemon.SubscribeToEvents()
+	current, l, cancel := s.impl.SubscribeToEvents()
 	defer cancel()
 
-	eventFilter := s.daemon.GetEventFilter(ef)
+	eventFilter := s.impl.GetEventFilter(ef)
 	handleEvent := func(ev *jsonmessage.JSONMessage) error {
 		if eventFilter.Include(ev) {
 			if err := enc.Encode(ev); err != nil {

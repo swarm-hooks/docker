@@ -14,7 +14,7 @@ func (s *router) getVolumesList(ctx context.Context, w http.ResponseWriter, r *h
 		return err
 	}
 
-	volumes, err := s.daemon.Volumes(r.Form.Get("filters"))
+	volumes, err := s.impl.Volumes(r.Form.Get("filters"))
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (s *router) getVolumeByName(ctx context.Context, w http.ResponseWriter, r *
 		return err
 	}
 
-	v, err := s.daemon.VolumeInspect(vars["name"])
+	v, err := s.impl.VolumeInspect(vars["name"])
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (s *router) postVolumesCreate(ctx context.Context, w http.ResponseWriter, r
 		return err
 	}
 
-	volume, err := s.daemon.VolumeCreate(req.Name, req.Driver, req.DriverOpts)
+	volume, err := s.impl.VolumeCreate(req.Name, req.Driver, req.DriverOpts)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (s *router) deleteVolumes(ctx context.Context, w http.ResponseWriter, r *ht
 	if err := httputils.ParseForm(r); err != nil {
 		return err
 	}
-	if err := s.daemon.VolumeRm(vars["name"]); err != nil {
+	if err := s.impl.VolumeRm(vars["name"]); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)

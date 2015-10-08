@@ -33,7 +33,7 @@ func (n *networkRouter) getNetworksList(ctx context.Context, w http.ResponseWrit
 	var names, ids []string
 	if names, nameFilter = netFilters["name"]; nameFilter {
 		for _, name := range names {
-			if nw, err := n.daemon.GetNetwork(name, daemon.NetworkByName); err == nil {
+			if nw, err := n.impl.GetNetwork(name, daemon.NetworkByName); err == nil {
 				list = append(list, buildNetworkResource(nw))
 			} else {
 				logrus.Errorf("failed to get network for filter=%s : %v", name, err)
@@ -43,14 +43,14 @@ func (n *networkRouter) getNetworksList(ctx context.Context, w http.ResponseWrit
 
 	if ids, idFilter = netFilters["id"]; idFilter {
 		for _, id := range ids {
-			for _, nw := range n.daemon.GetNetworksByID(id) {
+			for _, nw := range n.impl.GetNetworksByID(id) {
 				list = append(list, buildNetworkResource(nw))
 			}
 		}
 	}
 
 	if !nameFilter && !idFilter {
-		nwList := n.daemon.GetNetworksByID("")
+		nwList := n.impl.GetNetworksByID("")
 		for _, nw := range nwList {
 			list = append(list, buildNetworkResource(nw))
 		}
@@ -63,7 +63,7 @@ func (n *networkRouter) getNetwork(ctx context.Context, w http.ResponseWriter, r
 		return err
 	}
 
-	nw, err := n.daemon.FindNetwork(vars["id"])
+	nw, err := n.impl.FindNetwork(vars["id"])
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (n *networkRouter) postNetworkCreate(ctx context.Context, w http.ResponseWr
 			fmt.Sprintf("%s is a pre-defined network and cannot be created", create.Name))
 	}
 
-	nw, err := n.daemon.GetNetwork(create.Name, daemon.NetworkByName)
+	nw, err := n.impl.GetNetwork(create.Name, daemon.NetworkByName)
 	if _, ok := err.(libnetwork.ErrNoSuchNetwork); err != nil && !ok {
 		return err
 	}
@@ -102,7 +102,7 @@ func (n *networkRouter) postNetworkCreate(ctx context.Context, w http.ResponseWr
 		warning = fmt.Sprintf("Network with name %s (id : %s) already exists", nw.Name(), nw.ID())
 	}
 
-	nw, err = n.daemon.CreateNetwork(create.Name, create.Driver, create.IPAM, create.Options)
+	nw, err = n.impl.CreateNetwork(create.Name, create.Driver, create.IPAM, create.Options)
 	if err != nil {
 		return err
 	}
@@ -127,12 +127,12 @@ func (n *networkRouter) postNetworkConnect(ctx context.Context, w http.ResponseW
 		return err
 	}
 
-	nw, err := n.daemon.FindNetwork(vars["id"])
+	nw, err := n.impl.FindNetwork(vars["id"])
 	if err != nil {
 		return err
 	}
 
-	return n.daemon.ConnectContainerToNetwork(connect.Container, nw.Name())
+	return n.impl.ConnectContainerToNetwork(connect.Container, nw.Name())
 }
 
 func (n *networkRouter) postNetworkDisconnect(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -149,12 +149,12 @@ func (n *networkRouter) postNetworkDisconnect(ctx context.Context, w http.Respon
 		return err
 	}
 
-	nw, err := n.daemon.FindNetwork(vars["id"])
+	nw, err := n.impl.FindNetwork(vars["id"])
 	if err != nil {
 		return err
 	}
 
-	return n.daemon.DisconnectContainerFromNetwork(disconnect.Container, nw)
+	return n.impl.DisconnectContainerFromNetwork(disconnect.Container, nw)
 }
 
 func (n *networkRouter) deleteNetwork(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -162,7 +162,7 @@ func (n *networkRouter) deleteNetwork(ctx context.Context, w http.ResponseWriter
 		return err
 	}
 
-	nw, err := n.daemon.FindNetwork(vars["id"])
+	nw, err := n.impl.FindNetwork(vars["id"])
 	if err != nil {
 		return err
 	}
